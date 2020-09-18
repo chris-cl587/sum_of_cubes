@@ -1,0 +1,14 @@
+import java.util.List;
+
+public class Step1 {
+    record Step1Response(long q, Records.NumberAndFactors d, List<Long> Adq) {};
+    public static Step1Response step1(Records.NumberAndFactors d, int k) {
+        // For each positive divisor d1 of k/3 with gcd(d1, k/d1) = 1, set d := d0d1 and let Ad(q)
+        //be the set of z + qZ for which (d, z) is admissible.
+        if (k == 3) {
+            return new Step1Response(162, d, Utils.cubicReciprocityConstraint(d, k));
+        } else {
+            throw new RuntimeException("Not supported yet!");
+        }
+    }
+}
