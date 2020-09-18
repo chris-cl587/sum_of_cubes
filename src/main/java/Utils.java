@@ -1,13 +1,17 @@
 import cc.redberry.rings.ChineseRemainders;
 import de.scravy.primes.Primes;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.math.BigInteger.ONE;
 import static java.util.stream.Collectors.toList;
@@ -56,13 +60,13 @@ public class Utils {
                 inv += m;
             }
             if (inv != invOpt) {
-                System.err.println("Optimized inverse didn't get the same result!");
+//                System.err.println("Optimized inverse didn't get the same result!");
             }
             var toAdd = BigInteger.valueOf(r).multiply(N_over_m).multiply(BigInteger.valueOf(inv));
-            System.out.println(String.format("r=%s,p=%s,e=%s,m=%s,N/m=%s,inv=%s", r, p, e, m, N_over_m, inv));
+//            System.out.println(String.format("r=%s,p=%s,e=%s,m=%s,N/m=%s,inv=%s", r, p, e, m, N_over_m, inv));
             acc = acc.add(toAdd);
         }
-        System.out.println(String.format("acc:%s,N:%s", acc, N));
+//        System.out.println(String.format("acc:%s,N:%s", acc, N));
         return acc.mod(N).longValue();
     }
 
@@ -308,8 +312,8 @@ public class Utils {
                 final var zCubedMinusK = iCubed.subtract(BigInteger.valueOf(k));
                 final var potentialSquare = threed.multiply(
                         (fours.multiply(zCubedMinusK)).subtract(dCubed)
-                ).longValue();
-                if (squaresModP.contains(Math.floorMod(potentialSquare, prime))) {
+                );
+                if (squaresModP.contains(potentialSquare.mod(BigInteger.valueOf(prime)).longValue())) {
                     zs.add(i);
                 }
             }
@@ -321,32 +325,35 @@ public class Utils {
         if (k == 3) {
             final var first = BigInteger.valueOf(4 * GenericUtils.legendreSymbol(d.number(), 3) * d.number());
             final var dBigInt = BigInteger.valueOf(d.number());
-            final var second = dBigInt.multiply(dBigInt).subtract(ONE).multiply(BigInteger.valueOf(3));
-            return List.of(first.add(second).mod(BigInteger.valueOf(162)).longValue());
+            final var second = (dBigInt.multiply(dBigInt).subtract(ONE)).multiply(BigInteger.valueOf(3));
+            return List.of((first.add(second)).mod(BigInteger.valueOf(162)).longValue());
         } else {
             throw new RuntimeException("Not supported yet!");
         }
     }
 
-    static List<Long> crt_enumeration(List<Pair<Records.NumberAndPower, List<Long>>> numberToResidues) {
+    static Stream<Long> crt_enumeration(List<Pair<Records.NumberAndPower, List<Long>>> numberToResidues) {
         final var remainderPossibilities = numberToResidues.stream().map(Pair::getSecond).collect(Collectors.toList());
-        final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(remainderPossibilities);
         final var coprimeNumbers = numberToResidues.stream().map(i -> i.getFirst().number()).collect(Collectors.toList());
         final var coprimePowers = numberToResidues.stream().map(i -> i.getFirst().power()).collect(Collectors.toList());
 
-        final var acc = new ArrayList<Long>();
+//        final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(remainderPossibilities);
+        final Iterable<Long[]> cartesianProductRemainders = CartesianProductIterator.product(Long.class, remainderPossibilities);
+
         final var coprimeRaisedNumbers = new long[coprimeNumbers.size()];
         for (int i=0;i<coprimeRaisedNumbers.length;i++) {
             coprimeRaisedNumbers[i] = (long)Math.pow(coprimeNumbers.get(i), coprimePowers.get(i));
         }
-        for (var r: possibleRemainders) {
-            final var manualCRT = crt(r, coprimeNumbers, coprimePowers);
-            final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, r.stream().mapToLong(l -> l).toArray());
+
+        final var cartesianProductStream = StreamSupport.stream(cartesianProductRemainders.spliterator(), false);
+        return cartesianProductStream.map(r -> {
+            final var rList = Arrays.asList(r);
+            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
+            final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, ArrayUtils.toPrimitive(r));
             if (manualCRT != ringsCRT) {
                 System.err.println("Manual CRT got wrong results");
             }
-            acc.add(ringsCRT);
-        }
-        return acc;
+            return ringsCRT;
+        });
     }
 }

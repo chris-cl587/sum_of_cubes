@@ -6,6 +6,6 @@ public class Constants {
     static int c0 = 4;
     static int c1 = 50;
     static int c2 = 6;
-    static long zMax = (long)1e16;
+    static long zMax = (long)1e18;
     static long MAX_PRIME = (long)1e7;
 }

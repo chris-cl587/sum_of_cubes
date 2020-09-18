@@ -10,7 +10,9 @@ public class Step2 {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.
         var a = new Records.NumberAndFactors(1, Map.of());
-        if (Constants.c1 * q * d0.number() > Constants.zMax) return a;
+//        return a;
+        var c1Prod = Constants.c1 * q * d0.number();
+        if (c1Prod > Constants.zMax || c1Prod < 0) return a;
 
         final List<Pair<Integer, Double>> logSquareOverLogP = new ArrayList<>();
         for (var p: Constants.A) {
@@ -22,7 +24,8 @@ public class Step2 {
 
         for (int i=0;i<logSquareOverLogP.size();i++) {
             final var prime = logSquareOverLogP.get(i);
-            if (Constants.c0 * q * d0.number() * prime.getFirst() * a.number() > Constants.zMax) break;
+            var c0Prod = Constants.c0 * q * d0.number() * prime.getFirst() * a.number();
+            if (c0Prod > Constants.zMax || c0Prod < 0) break;
             a = a.multiply(prime.getFirst());
         }
         return a;

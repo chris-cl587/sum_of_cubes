@@ -1,7 +1,11 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.math.BigInteger.ONE;
 import static java.math.BigInteger.TWO;
@@ -291,8 +295,17 @@ public class GenericUtils {
     }
 
     public static boolean isSquareCandidate(long d, long z, int k) {
-        var candidate = 3*d*(4*Math.abs(k-z*z*z)-d*d*d);
-        return isSquare(candidate);
+        var threed = BigInteger.valueOf(3 * d);
+        var zcubed = BigInteger.valueOf(z).pow(3);
+        var dcubed = BigInteger.valueOf(d).pow(3);
+        var absKMinusZCubed = BigInteger.valueOf(k).subtract(zcubed).abs();
+        var candidate = threed.multiply(
+                (BigInteger.valueOf(4).multiply(absKMinusZCubed)).subtract(dcubed)
+        );
+//        var candidate = 3*d*(4*Math.abs(k-z*z*z)-d*d*d);
+        var isSquareResultFast = isSquare(candidate.longValue());
+        var isSquareBigInt = candidate.sqrtAndRemainder()[1].equals(ZERO);
+        return isSquareBigInt;
     }
 
     static long legendreSymbol(long n, long p) {

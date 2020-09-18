@@ -16,6 +16,17 @@
 # limitations under the License.
 #
 
+if [ -f "/usr/libexec/java_home" ];
+then
+    JAVA_HOME="$(/usr/libexec/java_home -v 14)"
+
+    if [ "$?" != "0" ];
+    then
+        printf "Please install Java 14. See the onboarding instructions at https://coursera.atlassian.net/wiki/spaces/EN/pages/357629963/Backend+Dev+Java"
+        exit 1
+    fi
+fi
+
 ##############################################################################
 ##
 ##  Gradle start up script for UN*X
