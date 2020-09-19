@@ -116,7 +116,7 @@ public class Utils {
         for (long n : recurse) {
             BigInteger dfn = polyval(df, BigInteger.valueOf(n), BigInteger.valueOf(p));
             BigInteger fn = polyval(f, BigInteger.valueOf(n), pk);
-            System.out.println("n=" + n + ",dfn=" + dfn + ",fn=" + fn + ",pk=" + pk + ",pk1=" + pk1);
+//            System.out.println("n=" + n + ",dfn=" + dfn + ",fn=" + fn + ",pk=" + pk + ",pk1=" + pk1);
             if (!fn.equals(BigInteger.ZERO)) {
                 if (!dfn.equals(BigInteger.ZERO)) {
                     var pB = BigInteger.valueOf(p);
@@ -198,7 +198,7 @@ public class Utils {
         a = Math.floorMod(a, p);
         if (a == 0 || p == 2 || p == 3) return List.of(Math.floorMod(a, p));
         if (Math.floorMod(p, 3) == 2) {
-            System.out.println("mod 3 = 2 case, a=" + a + ",p=" + p);
+//            System.out.println("mod 3 = 2 case, a=" + a + ",p=" + p);
             return List.of(GenericUtils.pow(a, (2 * p - 1) / 3, p));
         }
         long crs = GenericUtils.pow(a, (p - 1) / 3, p);
@@ -220,7 +220,7 @@ public class Utils {
             var squareRoot = GenericUtils.squreRootModuloPrime(BigInteger.valueOf(-3), BigInteger.valueOf(p)).longValue();
             c = (-1 + squareRoot) * GenericUtils.montgomery_inverse(2, p);
             c = Math.floorMod(c, p);
-            System.out.println("x=" + x + ",c=" + c + ",squareRoot=" + squareRoot);
+//            System.out.println("x=" + x + ",c=" + c + ",squareRoot=" + squareRoot);
             return List.of(x, Math.floorMod(x * c, p), BigInteger.valueOf(x).multiply(BigInteger.valueOf(c)).multiply(BigInteger.valueOf(c)).mod(BigInteger.valueOf(p)).longValue());
         }
 
@@ -275,11 +275,11 @@ public class Utils {
             var prime = primes.get(i);
             var power = powers.get(i);
             modP_power_remainders.addAll(hensel_cuberoot(prime, power, cuberoot_k));
-            System.out.println(String.format("p: %s, modP_power_remainders: %s", prime, modP_power_remainders));
+//            System.out.println(String.format("p: %s, modP_power_remainders: %s", prime, modP_power_remainders));
             primeToRemainders.put(prime, modP_power_remainders);
         }
 
-        System.out.println("primeToRemainders: " + primeToRemainders);
+//        System.out.println("primeToRemainders: " + primeToRemainders);
 
         final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(new ArrayList<>(primeToRemainders.values()));
 
@@ -340,20 +340,25 @@ public class Utils {
 //        final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(remainderPossibilities);
         final Iterable<Long[]> cartesianProductRemainders = CartesianProductIterator.product(Long.class, remainderPossibilities);
 
-        final var coprimeRaisedNumbers = new long[coprimeNumbers.size()];
+        final cc.redberry.rings.bigint.BigInteger[] coprimeRaisedNumbers = new cc.redberry.rings.bigint.BigInteger[coprimeNumbers.size()];
         for (int i=0;i<coprimeRaisedNumbers.length;i++) {
-            coprimeRaisedNumbers[i] = (long)Math.pow(coprimeNumbers.get(i), coprimePowers.get(i));
+            coprimeRaisedNumbers[i] = cc.redberry.rings.bigint.BigInteger.valueOf(coprimeNumbers.get(i)).pow(coprimePowers.get(i));
         }
 
         final var cartesianProductStream = StreamSupport.stream(cartesianProductRemainders.spliterator(), false);
         return cartesianProductStream.map(r -> {
             final var rList = Arrays.asList(r);
-            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
-            final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, ArrayUtils.toPrimitive(r));
-            if (manualCRT != ringsCRT) {
-                System.err.println("Manual CRT got wrong results");
+            final cc.redberry.rings.bigint.BigInteger[] rBigInts = rList.stream().map(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
+//            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
+            try {
+                final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, rBigInts).longValue();
+                return ringsCRT;
+            } catch (Exception e){
+                throw e;
             }
-            return ringsCRT;
+//            if (manualCRT != ringsCRT) {
+//                System.err.println("Manual CRT got wrong results");
+//            }
         });
     }
 }

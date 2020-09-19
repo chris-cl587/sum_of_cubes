@@ -304,7 +304,7 @@ public class GenericUtils {
         );
 //        var candidate = 3*d*(4*Math.abs(k-z*z*z)-d*d*d);
         var isSquareResultFast = isSquare(candidate.longValue());
-        var isSquareBigInt = candidate.sqrtAndRemainder()[1].equals(ZERO);
+        var isSquareBigInt = candidate.signum() == 1 && candidate.sqrtAndRemainder()[1].equals(ZERO);
         return isSquareBigInt;
     }
 

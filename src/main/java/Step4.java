@@ -71,7 +71,7 @@ public class Step4 {
                 if (shouldCheckSquare) {
                     squaresChecked += 1;
                     if (GenericUtils.isSquareCandidate(d.number(), z, k)) {
-                        throw new RuntimeException(String.format("FOUND SQUARE!! d:%s,z:%s", d, z));
+                        System.err.println(String.format("FOUND SQUARE!! d:%s,z:%s", d, z));
                     }
                 }
                 z = z + (multiplier * m);
