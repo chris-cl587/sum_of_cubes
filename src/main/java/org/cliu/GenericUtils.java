@@ -1,3 +1,7 @@
+package org.cliu;
+
+import com.squareup.jnagmp.Gmp;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,12 +66,7 @@ public class GenericUtils {
 
     // TODO: Investigate into https://eprint.iacr.org/2017/411.pdf
     static long inverse_mod_prime_power(long a, long p, long e) {
-//        long inv = BigInteger.valueOf(a).modInverse(BigInteger.valueOf(p)).longValue();
         long montyinv = montgomery_inverse(a, p);
-//        if (inv != montyinv) {
-//            System.out.println(String.format("montgomery_inverse failed for a=%s, p=%s, regular: %s, monty: %s", a, p, inv, montyinv));
-//            throw new RuntimeException("failure");
-//        }
         if (e == 1) return montyinv;
         long tmp;
         // Reference: https://hal.archives-ouvertes.fr/file/index/docid/736701/filename/invmodpk.pdf
@@ -78,12 +77,17 @@ public class GenericUtils {
             montyinv *= tmp;
             montyinv = Math.floorMod(montyinv, (long)Math.pow(p, e));
         }
-
         return montyinv;
     }
 
     static long pow(long b, long e, long m) {
-        return BigInteger.valueOf(b).modPow(BigInteger.valueOf(e), BigInteger.valueOf(m)).longValue();
+        // REMARK: Appears LibGMP is slower than BigInteger for our setup, re-investigate later.
+//        var gmpPow = Gmp.modPowInsecure(BigInteger.valueOf(b), BigInteger.valueOf(e), BigInteger.valueOf(m)).longValueExact();
+        var biPow = BigInteger.valueOf(b).modPow(BigInteger.valueOf(e), BigInteger.valueOf(m)).longValue();
+//        if (gmpPow != biPow) {
+//            throw new RuntimeException(String.format("GMP modPowInsecure did not match BI pow for b=%s, e=%s, m=%s", b,e,m));
+//        }
+        return biPow;
     }
 
     /**

@@ -1,11 +1,9 @@
+package org.cliu;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Enumeration {
     // Recursively enumerate all positive integers using prime powers. Each prime must be congruent to 0 mod 3.

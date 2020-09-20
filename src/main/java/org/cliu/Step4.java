@@ -1,4 +1,5 @@
-import cc.redberry.rings.ChineseRemainders;
+package org.cliu;
+
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;

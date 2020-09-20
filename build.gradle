@@ -1,6 +1,16 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:6.0.0'
+    }
+}
 plugins {
     id 'java'
 }
+
+apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'org.example'
 version '1.0-SNAPSHOT'
@@ -15,12 +25,27 @@ dependencies {
     compile group: 'de.scravy', name: 'primes4j', version: '2'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
     compile 'com.github.ben-manes.caffeine:caffeine:2.8.5'
+    compile group: 'com.squareup.jnagmp', name: 'jnagmp', version: '3.0.0'
 }
 
 compileJava {
     options.compilerArgs += ["--enable-preview"]
 }
+compileTestJava {
+    options.compilerArgs += ["--enable-preview"]
+}
 
 tasks.withType(JavaExec) {
     jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC']
+}
+tasks.withType(Test) {
+    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC']
+}
+
+
+jar {
+    manifest {
+        attributes "Main-Class": "org.cliu.Main"
+    }
+
 }

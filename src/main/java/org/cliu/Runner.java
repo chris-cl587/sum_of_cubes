@@ -1,3 +1,5 @@
+package org.cliu;
+
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
@@ -18,7 +20,7 @@ public class Runner {
             final var d0s = Enumeration.nSmoothEnumerationIteration((long) 1e17, (long) 3e17, primesLongArray, new Records.NumberAndFactors(BigInteger.valueOf(prime), Map.of(prime, 1)), n, i);
             var timeTaken = 1.0 * (Instant.now().toEpochMilli() - instant.toEpochMilli()) / 1000;
             System.out.println(String.format("Generating numbers took %s, %s generated", timeTaken, d0s.size()));
-//        final var d0For3 = new Records.NumberAndFactors(108398887211L, Map.of(167, 1, 649095133, 1));
+//        final var d0For3 = new org.cliu.Records.NumberAndFactors(108398887211L, Map.of(167, 1, 649095133, 1));
 //        final var d0s = List.of(d0For3);
             final var k = 3;
             instant = Instant.now();
