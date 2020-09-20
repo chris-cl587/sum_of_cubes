@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Step2 {
+    /**
+     * Computes step 2 of Algorithm 3.5 described in https://arxiv.org/pdf/2007.01209.pdf
+     *
+     * This bumps d0 up such that eventually in step 4, the mod "m" class is bigger so we have less
+     * candidate values to check.
+     */
     public static Records.NumberAndFactors step2(Records.NumberAndFactors d0, int q, int k) {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.

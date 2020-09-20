@@ -9,6 +9,12 @@ import java.util.stream.Stream;
 
 public class Step4 {
 
+    /**
+     * Computes step 4 of Algorithm 3.5 described in https://arxiv.org/pdf/2007.01209.pdf
+     * First, uses CRT to compute the set Z_m identified Z/mZ.
+     *
+     * Second, keep adding multiples of `m` for all the candidates with |z| <= z_max.
+     */
     public static void step4(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a, Records.NumberAndFactors b) {
         var crtResponse = step4_CRT(q, Adq, k, d0, d, a);
         var m = crtResponse.m();
@@ -77,7 +83,6 @@ public class Step4 {
                 }
                 z = z + (multiplier * m);
             }
-
 //            System.out.println(String.format("Checked %s zs, %s squares, %s percent", zChecked, squaresChecked, 100.0 * squaresChecked/zChecked));
         }
     }

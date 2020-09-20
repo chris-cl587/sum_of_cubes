@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -18,13 +17,11 @@ import java.util.stream.StreamSupport;
 import static java.math.BigInteger.ONE;
 
 public class Utils {
-    static Random random = new Random(123L);
-
     // the jacobi function uses this lookup table
     static final int[] jacobiTable = {0, 1, 0, -1, 0, -1, 0, 1};
 
-
     /**
+     * From labmath method.
      * def crt(rems, mods): # moduli and remainders are lists; moduli must be pairwsise coprime.
      * """
      * Return the unique integer in range(iterprod(mods)) that reduces to x mod y
@@ -58,7 +55,6 @@ public class Utils {
             var N_over_m = N / m;
             long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
             var toAdd = BigInteger.valueOf(r).multiply(BigInteger.valueOf(N_over_m)).multiply(BigInteger.valueOf(invOpt));
-//            System.out.println(String.format("r=%s,p=%s,e=%s,m=%s,N/m=%s,inv=%s", r, p, e, m, N_over_m, inv));
             acc = acc.add(toAdd);
         }
         try {
@@ -70,6 +66,7 @@ public class Utils {
     }
 
     /*
+        From labmath method.
         def hensel(f, p, k): # Finds all solutions to f(x) == 0 mod p**k.
 
         Uses Hensel lifting to generate with some efficiency all zeros of a
@@ -105,11 +102,16 @@ public class Utils {
             .maximumSize((long)1e8)
             .build();
 
-    static List<Long> hensel_cuberoot(long prime, long primeExp, long cuberoot_k) {
+    /**
+     * Computes the cuberoot of k mod p^e.
+     * Does so in a cached fashion to avoid re-computing these values over and over.
+     */
+    public static List<Long> hensel_cuberoot(long prime, long primeExp, long cuberoot_k) {
         var cacheKey = prime + "~" + primeExp + "~" + cuberoot_k;
         return henselCuberootCache.get(cacheKey, key -> hensel(List.of(-cuberoot_k, 0L, 0L, 1L), prime, primeExp, cuberoot_k));
     }
 
+    // @VisibleForTesting
     static List<Long> hensel(List<Long> f, long prime, long primeExp, long cuberoot_k) {
         if (primeExp == 1) return cuberoot_prime(cuberoot_k, prime);
         long pk1 = (long) Math.pow(prime, primeExp - 1);
@@ -120,7 +122,6 @@ public class Utils {
         for (long n : recurse) {
             BigInteger dfn = polyval(df, BigInteger.valueOf(n), BigInteger.valueOf(prime));
             BigInteger fn = polyval(f, BigInteger.valueOf(n), pk);
-//            System.out.println("n=" + n + ",dfn=" + dfn + ",fn=" + fn + ",pk=" + pk + ",pk1=" + pk1);
             if (!fn.equals(BigInteger.ZERO)) {
                 if (!dfn.equals(BigInteger.ZERO)) {
                     var pB = BigInteger.valueOf(prime);
@@ -136,6 +137,7 @@ public class Utils {
         return acc;
     }
 
+    // @VisibleForTesting
     static BigInteger polyval(List<Long> coefs, BigInteger x, BigInteger m) {
         BigInteger out = BigInteger.ZERO;
         for (int i = coefs.size() - 1; i >= 0; i--) {
@@ -146,6 +148,7 @@ public class Utils {
         return out;
     }
 
+    // @VisibleForTesting
     static List<Long> computeDf(List<Long> coefs) {
         var result = new ArrayList<Long>();
         for (int i = 1; i < coefs.size(); i++) {
@@ -155,6 +158,7 @@ public class Utils {
     }
 
     /*
+        From labmath method.
         def cbrtmod_prime(a, p):
         """
         Returns in a sorted list all cube roots of a mod p.  There are a bunch of
@@ -198,10 +202,13 @@ public class Utils {
             # 4: Reduce exponent.
             if s == pow(b, 3**(m-1), p): t, s = pow(y, 2, p), pow(s, 2, p)
          */
-    static List<Long> cuberoot_prime(long a, long p) {
+    private static List<Long> cuberoot_prime(long a, long p) {
+        // REMARK: This can potentially be cached, but since we are caching the Hensel lifted versions,
+        // we don't cache here.
         return cuberoot_prime_computation(a, p);
     }
-    static List<Long> cuberoot_prime_computation(long a, long p) {
+
+    private static List<Long> cuberoot_prime_computation(long a, long p) {
         a = Math.floorMod(a, p);
         if (a == 0 || p == 2 || p == 3) return List.of(Math.floorMod(a, p));
         if (Math.floorMod(p, 3) == 2) {
@@ -278,7 +285,7 @@ public class Utils {
         return primes.getUnderlyingArray();
     }
 
-    static Cache<String, List<Long>> ssubdCache = Caffeine.newBuilder()
+    private static final Cache<String, List<Long>> ssubdCache = Caffeine.newBuilder()
             .maximumSize((int)1e7)
             .build();
 
