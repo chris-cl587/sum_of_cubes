@@ -97,7 +97,7 @@ public class GenericUtils {
      * <tt>a</tt> is a quadratic residue modulo <tt>p</tt>.
      * @throws IllegalArgumentException if <tt>a</tt> is a quadratic non-residue modulo <tt>p</tt>
      */
-    public static BigInteger squreRootModuloPrime(BigInteger a, BigInteger p)
+    public static BigInteger squareRootModuloPrime(BigInteger a, BigInteger p)
             throws IllegalArgumentException {
 
         BigInteger v = null;

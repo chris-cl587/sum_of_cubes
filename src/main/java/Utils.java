@@ -1,6 +1,7 @@
 import cc.redberry.rings.ChineseRemainders;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import de.scravy.primes.Primes;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.math.BigInteger;
@@ -217,7 +218,7 @@ public class Utils {
             } else {
                 x = GenericUtils.pow(a, (p + 2) / 9, p);
             }
-            var squareRoot = GenericUtils.squreRootModuloPrime(BigInteger.valueOf(-3), BigInteger.valueOf(p)).longValue();
+            var squareRoot = GenericUtils.squareRootModuloPrime(BigInteger.valueOf(-3), BigInteger.valueOf(p)).longValue();
             c = (-1 + squareRoot) * GenericUtils.montgomery_inverse(2, p);
             c = Math.floorMod(c, p);
 //            System.out.println("x=" + x + ",c=" + c + ",squareRoot=" + squareRoot);
@@ -291,7 +292,16 @@ public class Utils {
         return primes.getUnderlyingArray();
     }
 
+    static Cache<String, List<Long>> ssubdCache = Caffeine.newBuilder()
+            .maximumSize((int)1e7)
+            .build();
+
     static List<Long> Ssubd(long d, long prime, int k) {
+        final var dModP = Math.floorMod(d, prime);
+        return ssubdCache.get("~" + dModP + "~" + prime + "~" + k, key -> Ssubd_computation(d, prime, k));
+    }
+
+    static List<Long> Ssubd_computation(long d, long prime, int k) {
         final var dBigInt = BigInteger.valueOf(d);
         if (prime == 2) {
             return List.of((long) Math.floorMod(k + d, 2));
@@ -323,10 +333,12 @@ public class Utils {
 
     static List<Long> cubicReciprocityConstraint(Records.NumberAndFactors d, long k) {
         if (k == 3) {
-            final var first = BigInteger.valueOf(4 * GenericUtils.legendreSymbol(d.number(), 3) * d.number());
-            final var dBigInt = BigInteger.valueOf(d.number());
+            final var first = BigInteger.valueOf(4 * GenericUtils.legendreSymbol(d.number().longValue(), 3) * d.number().longValue());
+            final var dBigInt = BigInteger.valueOf(d.number().longValue());
             final var second = (dBigInt.multiply(dBigInt).subtract(ONE)).multiply(BigInteger.valueOf(3));
-            return List.of((first.add(second)).mod(BigInteger.valueOf(162)).longValue());
+            // REMARK: Mod 81 rather than 162 to avoid the case of p^k being a power of 2.
+            final var toMod = d.primeFactors().containsKey(2) ? 81 : 162;
+            return List.of((first.add(second)).mod(BigInteger.valueOf(toMod)).longValue());
         } else {
             throw new RuntimeException("Not supported yet!");
         }
@@ -349,11 +361,12 @@ public class Utils {
         return cartesianProductStream.map(r -> {
             final var rList = Arrays.asList(r);
             final cc.redberry.rings.bigint.BigInteger[] rBigInts = rList.stream().map(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
-//            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
             try {
+//            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
                 final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, rBigInts).longValue();
                 return ringsCRT;
             } catch (Exception e){
+                System.err.println("coprimeRaisedPowers: " + Arrays.toString(coprimeRaisedNumbers) + " rBitInts: " + Arrays.toString(rBigInts));
                 throw e;
             }
 //            if (manualCRT != ringsCRT) {

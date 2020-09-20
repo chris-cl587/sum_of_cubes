@@ -1,50 +1,68 @@
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Enumeration {
+    // Recursively enumerate all positive integers using prime powers. Each prime must be congruent to 0 mod 3.
     static ConcurrentLinkedDeque<Records.NumberAndFactors> nSmoothEnumerationRecursive(ConcurrentLinkedDeque<Records.NumberAndFactors> acc, long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int startIndex) {
         if (startIndex < 0) return acc;
         nSmoothEnumerationRecursive(acc, min, max, primes, initialNumber, startIndex - 1);
         var iNumber = initialNumber.multiply(primes[startIndex]);
         while(true) {
-            if (iNumber.number() > max) break;
-            if (iNumber.number() > min) acc.add(iNumber);
+            if (iNumber.number().compareTo(BigInteger.valueOf(max)) > 0) break;
+            if (iNumber.number().compareTo(BigInteger.valueOf(min)) > 0) acc.add(iNumber);
             nSmoothEnumerationRecursive(acc, min, max, primes, iNumber, startIndex - 1);
             iNumber = iNumber.multiply(primes[startIndex]);
         }
         return acc;
     }
 
-    static ConcurrentLinkedDeque<Records.NumberAndFactors> nSmoothEnumerationIteration(long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int maxNum) {
+    // Same as above recursion, but using iteration for memory reasons.
+    static List<Records.NumberAndFactors> nSmoothEnumerationIteration(long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int maxNum) {
+        final var minB = BigInteger.valueOf(min);
+        final var maxB = BigInteger.valueOf(max);
+        final var acc = new ArrayList<Records.NumberAndFactors>();
+        if (initialNumber.number().compareTo(minB) > 0 && initialNumber.number().compareTo(maxB) < 0) acc.add(initialNumber);
 
-        final var acc = new ConcurrentLinkedDeque<Records.NumberAndFactors>();
-        acc.add(initialNumber);
+        List<Records.NumberAndFactors> candidates = new ArrayList<>();
+        candidates.add(initialNumber);
+
         for (int i=primes.length-1;i>=0;i--) {
-//        for (int i = 0; i < primes.length; i++) {
-            if (primes[i] % 3 ==0) continue;
-            if (primes[i] == 649095133L) {
-                var moreThanMin = initialNumber.number() * primes[i] > min;
-                var lessThanMax = initialNumber.number() * primes[i] < max;
-                System.out.println("primes[i] == 649095133!! greater than min: " + moreThanMin + " less than max: " + lessThanMax + " acc: " + acc);
-            }
-            int finalI = i;
-            final var candidates = acc.stream().filter(a -> a.multiply(primes[finalI]).number() < max).collect(Collectors.toUnmodifiableList());
+            if (primes[i] % 3 ==0
+                    // HACK: This approach didn't seem to scale and OOM'ed without this filter.
+                    || primes[i] < 30) continue;
+//            int finalI = i;
+//            candidates = candidates.stream().filter(a -> a.multiply(primes[finalI]).number() < max).collect(Collectors.toUnmodifiableList());
+            List<Records.NumberAndFactors> newCandidates = new ArrayList<>();
             for (var n : candidates) {
                 var jNumber = n;
                 while(true) {
                     jNumber = jNumber.multiply(primes[i]);
-                    if (jNumber.number() > max) break;
-                    if (jNumber.number() > min) acc.add(jNumber);
+                    if (jNumber.number().compareTo(maxB) > 0) break;
+                    if (i == 0 || jNumber.multiply(primes[i - 1]).number().compareTo(maxB) < 0) newCandidates.add(jNumber);
+                    if (jNumber.number().compareTo(minB) > 0) {
+                        acc.add(jNumber);
+                    }
                     if (acc.size() >= maxNum)  {
-                        if (initialNumber.number() < min) acc.removeFirst();
                         return acc;
                     }
                 }
             }
+            candidates.addAll(newCandidates);
+            if (i % 10000 == 0 || i < 1000){
+                System.out.println("i: " + i + " acc.length: " + acc.size() + " Candidates length: " + candidates.size());
+            }
+            if (candidates.size() == 102) {
+                System.out.println(candidates);
+            }
         }
-        if (initialNumber.number() < min) acc.removeFirst();
         return acc;
     }
 }
+
+
