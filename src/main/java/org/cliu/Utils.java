@@ -44,8 +44,8 @@ public class Utils {
      * return sum(r * (N//m) * modinv(N//m, m) for (r, m) in zip(rems, mods) if m != 1) % N
      */
     static Long crt(List<Long> rems, List<Long> coprimes, List<Integer> pows) {
-        BigInteger N = BigInteger.valueOf(1L);
-        for (int i = 0; i < coprimes.size(); i++) N = N.multiply(BigInteger.valueOf(coprimes.get(i)).pow(pows.get(i)));
+        var N = 1L;
+        for (int i = 0; i < coprimes.size(); i++) N *= (long)Math.pow(coprimes.get(i), pows.get(i));
 
         BigInteger acc = BigInteger.ZERO;
         for (int i = 0; i < rems.size(); i++) {
@@ -55,21 +55,14 @@ public class Utils {
             long m = (long) Math.pow(p, e);
             if (m == 1) continue;
             final var mBigInt = BigInteger.valueOf(m);
-            BigInteger N_over_m = N.divide(mBigInt);
-//            long inv = N_over_m.modInverse(mBigInt).longValue();
-            long invOpt = m % 2 == 0 ? N_over_m.modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m.longValueExact(), p, e);
-//            if (invOpt < 0) {
-//                invOpt += m;
-//            }
-//            if (inv != invOpt) {
-//                System.err.println(String.format("Optimized inverse didn't get the same result for N/m: %s m: %s (opt: %s, answer: %s, p: %s, e: %s)", N_over_m, mBigInt, invOpt, inv, p, e));
-//            }
-            var toAdd = BigInteger.valueOf(r).multiply(N_over_m).multiply(BigInteger.valueOf(invOpt));
+            var N_over_m = N / m;
+            long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
+            var toAdd = BigInteger.valueOf(r).multiply(BigInteger.valueOf(N_over_m)).multiply(BigInteger.valueOf(invOpt));
 //            System.out.println(String.format("r=%s,p=%s,e=%s,m=%s,N/m=%s,inv=%s", r, p, e, m, N_over_m, inv));
             acc = acc.add(toAdd);
         }
         try {
-            return acc.mod(N).longValueExact();
+            return acc.mod(BigInteger.valueOf(N)).longValueExact();
         } catch (Exception e){
             System.out.println(String.format("overflow! acc: %s N: %s coprimes: %s, pows: %s", acc, N, coprimes, pows));
             throw e;
@@ -108,29 +101,34 @@ public class Utils {
             dfn, fn = polyval(df, n, p), polyval(f, n, pk)
             yield from [n + ((-modinv(dfn,p) * fn // pk1) % p) * pk1] if dfn else [] if fn else (n + t * pk1 for t in range(p))
          */
-    static List<Long> hensel_cuberoot(long p, long k, long cuberoot_k) {
-        return hensel(List.of(-cuberoot_k, 0L, 0L, 1L), p, k, cuberoot_k);
+    static Cache<String, List<Long>> henselCuberootCache = Caffeine.newBuilder()
+            .maximumSize((long)1e8)
+            .build();
+
+    static List<Long> hensel_cuberoot(long prime, long primeExp, long cuberoot_k) {
+        var cacheKey = prime + "~" + primeExp + "~" + cuberoot_k;
+        return henselCuberootCache.get(cacheKey, key -> hensel(List.of(-cuberoot_k, 0L, 0L, 1L), prime, primeExp, cuberoot_k));
     }
 
-    static List<Long> hensel(List<Long> f, long p, long k, long cuberoot_k) {
-        if (k == 1) return cuberoot_prime(cuberoot_k, p);
-        long pk1 = (long) Math.pow(p, k - 1);
+    static List<Long> hensel(List<Long> f, long prime, long primeExp, long cuberoot_k) {
+        if (primeExp == 1) return cuberoot_prime(cuberoot_k, prime);
+        long pk1 = (long) Math.pow(prime, primeExp - 1);
         var df = computeDf(f);
-        var pk = BigInteger.valueOf(pk1).multiply(BigInteger.valueOf(p));
-        var recurse = hensel(f, p, k - 1, cuberoot_k);
+        var pk = BigInteger.valueOf(pk1).multiply(BigInteger.valueOf(prime));
+        var recurse = hensel(f, prime, primeExp - 1, cuberoot_k);
         final var acc = new ArrayList<Long>();
         for (long n : recurse) {
-            BigInteger dfn = polyval(df, BigInteger.valueOf(n), BigInteger.valueOf(p));
+            BigInteger dfn = polyval(df, BigInteger.valueOf(n), BigInteger.valueOf(prime));
             BigInteger fn = polyval(f, BigInteger.valueOf(n), pk);
 //            System.out.println("n=" + n + ",dfn=" + dfn + ",fn=" + fn + ",pk=" + pk + ",pk1=" + pk1);
             if (!fn.equals(BigInteger.ZERO)) {
                 if (!dfn.equals(BigInteger.ZERO)) {
-                    var pB = BigInteger.valueOf(p);
+                    var pB = BigInteger.valueOf(prime);
                     var modInvValue = dfn.modInverse(pB);
-                    acc.add(BigInteger.valueOf(n).add(fn.multiply(modInvValue.negate()).divide(BigInteger.valueOf(pk1)).mod(BigInteger.valueOf(p)).multiply(BigInteger.valueOf(pk1))).longValue());
+                    acc.add(BigInteger.valueOf(n).add(fn.multiply(modInvValue.negate()).divide(BigInteger.valueOf(pk1)).mod(BigInteger.valueOf(prime)).multiply(BigInteger.valueOf(pk1))).longValue());
                 }
             } else {
-                for (int i = 0; i < p; i++) {
+                for (int i = 0; i < prime; i++) {
                     acc.add(n + i * pk1);
                 }
             }
@@ -201,6 +199,9 @@ public class Utils {
             if s == pow(b, 3**(m-1), p): t, s = pow(y, 2, p), pow(s, 2, p)
          */
     static List<Long> cuberoot_prime(long a, long p) {
+        return cuberoot_prime_computation(a, p);
+    }
+    static List<Long> cuberoot_prime_computation(long a, long p) {
         a = Math.floorMod(a, p);
         if (a == 0 || p == 2 || p == 3) return List.of(Math.floorMod(a, p));
         if (Math.floorMod(p, 3) == 2) {
