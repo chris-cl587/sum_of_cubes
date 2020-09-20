@@ -1,11 +1,7 @@
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import static java.math.BigInteger.ONE;
 import static java.math.BigInteger.TWO;
@@ -17,6 +13,8 @@ public class GenericUtils {
         for (int i = 0; i < 64; ++i) GenericUtils.goodMask |= Long.MIN_VALUE >>> (i * i);
     };
 
+    // Sourced and adapted from https://github.com/randombit/botan/blob/c32ac80d130be64ce5357b29a5fa82cad7aa2564/src/lib/math/numbertheory/mod_inv.cpp#L27-L90
+    // Adapted from C++ to Java.
     public static long montgomery_inverse(long a,
                                    long p) {
         long k = 0;
@@ -62,25 +60,26 @@ public class GenericUtils {
         return result;
     }
 
+    // TODO: Investigate into https://eprint.iacr.org/2017/411.pdf
     static long inverse_mod_prime_power(long a, long p, long e) {
-        long inv = montgomery_inverse(a, p);
-        if (e == 1) return inv;
+//        long inv = BigInteger.valueOf(a).modInverse(BigInteger.valueOf(p)).longValue();
+        long montyinv = montgomery_inverse(a, p);
+//        if (inv != montyinv) {
+//            System.out.println(String.format("montgomery_inverse failed for a=%s, p=%s, regular: %s, monty: %s", a, p, inv, montyinv));
+//            throw new RuntimeException("failure");
+//        }
+        if (e == 1) return montyinv;
         long tmp;
-        for (int i = 2; i < e; i <<= 1) {
-            tmp = inv * inv;
-            tmp *= a;
-            tmp = Math.floorMod(tmp, (long)Math.pow(p, i));
-            inv <<= 1;
-            inv -= tmp;
+        // Reference: https://hal.archives-ouvertes.fr/file/index/docid/736701/filename/invmodpk.pdf
+        // Algorithm 2, there looks to be a typo, should increment `i` rather than bit-shift...
+        for (int i = 0; i < e; i += 1) {
+            tmp = 2-a*montyinv;
+            tmp = Math.floorMod(tmp, (long)Math.pow(p, e));
+            montyinv *= tmp;
+            montyinv = Math.floorMod(montyinv, (long)Math.pow(p, e));
         }
 
-        tmp = inv * inv;
-        tmp *= a;
-        tmp = Math.floorMod(tmp, (long) Math.pow(p, e));
-        inv <<= 1;
-        inv -= tmp;
-
-        return Math.floorMod(inv, (long) Math.pow(p, e));
+        return montyinv;
     }
 
     static long pow(long b, long e, long m) {
@@ -88,6 +87,9 @@ public class GenericUtils {
     }
 
     /**
+     * Taken from  `bouncycastle` library,
+     * See https://github.com/bcgit/bc-java/blob/07604208a773d2334fb09276796288404804e557/core/src/main/java/org/bouncycastle/pqc/math/linearalgebra/IntegerFunctions.java
+     *
      * Computes the square root of a BigInteger modulo a prime employing the
      * Shanks-Tonelli algorithm.
      *
@@ -302,7 +304,7 @@ public class GenericUtils {
         var candidate = threed.multiply(
                 (BigInteger.valueOf(4).multiply(absKMinusZCubed)).subtract(dcubed)
         );
-//        var candidate = 3*d*(4*Math.abs(k-z*z*z)-d*d*d);
+        // TODO: Figure out of this is performance critical.
         var isSquareResultFast = isSquare(candidate.longValue());
         var isSquareBigInt = candidate.signum() == 1 && candidate.sqrtAndRemainder()[1].equals(ZERO);
         return isSquareBigInt;

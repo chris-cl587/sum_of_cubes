@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -18,6 +19,7 @@ import static java.math.BigInteger.ONE;
 import static java.util.stream.Collectors.toList;
 
 public class Utils {
+    static Random random = new Random(123L);
 
     // the jacobi function uses this lookup table
     static final int[] jacobiTable = {0, 1, 0, -1, 0, -1, 0, 1};
@@ -42,33 +44,37 @@ public class Utils {
      * N = iterprod(mods)
      * return sum(r * (N//m) * modinv(N//m, m) for (r, m) in zip(rems, mods) if m != 1) % N
      */
-    static Long crt(List<Long> rems, List<Long> primes, List<Integer> pows) {
+    static Long crt(List<Long> rems, List<Long> coprimes, List<Integer> pows) {
         BigInteger N = BigInteger.valueOf(1L);
-        // TODO: Can overflow here.
-        for (int i = 0; i < primes.size(); i++) N = N.multiply(BigInteger.valueOf(primes.get(i)).pow(pows.get(i)));
+        for (int i = 0; i < coprimes.size(); i++) N = N.multiply(BigInteger.valueOf(coprimes.get(i)).pow(pows.get(i)));
 
         BigInteger acc = BigInteger.ZERO;
         for (int i = 0; i < rems.size(); i++) {
             long r = rems.get(i);
-            long p = primes.get(i);
+            long p = coprimes.get(i);
             long e = pows.get(i);
             long m = (long) Math.pow(p, e);
+            if (m == 1) continue;
             final var mBigInt = BigInteger.valueOf(m);
             BigInteger N_over_m = N.divide(mBigInt);
-            long inv = N_over_m.modInverse(mBigInt).longValue();
-            long invOpt = GenericUtils.inverse_mod_prime_power(N_over_m.longValue(), p, e);
-            if (inv < 0) {
-                inv += m;
-            }
-            if (inv != invOpt) {
-//                System.err.println("Optimized inverse didn't get the same result!");
-            }
-            var toAdd = BigInteger.valueOf(r).multiply(N_over_m).multiply(BigInteger.valueOf(inv));
+//            long inv = N_over_m.modInverse(mBigInt).longValue();
+            long invOpt = m % 2 == 0 ? N_over_m.modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m.longValueExact(), p, e);
+//            if (invOpt < 0) {
+//                invOpt += m;
+//            }
+//            if (inv != invOpt) {
+//                System.err.println(String.format("Optimized inverse didn't get the same result for N/m: %s m: %s (opt: %s, answer: %s, p: %s, e: %s)", N_over_m, mBigInt, invOpt, inv, p, e));
+//            }
+            var toAdd = BigInteger.valueOf(r).multiply(N_over_m).multiply(BigInteger.valueOf(invOpt));
 //            System.out.println(String.format("r=%s,p=%s,e=%s,m=%s,N/m=%s,inv=%s", r, p, e, m, N_over_m, inv));
             acc = acc.add(toAdd);
         }
-//        System.out.println(String.format("acc:%s,N:%s", acc, N));
-        return acc.mod(N).longValue();
+        try {
+            return acc.mod(N).longValueExact();
+        } catch (Exception e){
+            System.out.println(String.format("overflow! acc: %s N: %s", acc, N));
+            throw e;
+        }
     }
 
     /*
@@ -268,25 +274,6 @@ public class Utils {
         return List.of(x, Math.floorMod((x * s), p), Math.floorMod((x * s * s), p));
     }
 
-    static List<Long> cube_solutions(List<Long> primes, List<Integer> powers) {
-        long cuberoot_k = 3;
-        var primeToRemainders = new HashMap<Long, List<Long>>();
-        for (int i = 0; i < primes.size(); i++) {
-            var modP_power_remainders = new ArrayList<Long>();
-            var prime = primes.get(i);
-            var power = powers.get(i);
-            modP_power_remainders.addAll(hensel_cuberoot(prime, power, cuberoot_k));
-//            System.out.println(String.format("p: %s, modP_power_remainders: %s", prime, modP_power_remainders));
-            primeToRemainders.put(prime, modP_power_remainders);
-        }
-
-//        System.out.println("primeToRemainders: " + primeToRemainders);
-
-        final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(new ArrayList<>(primeToRemainders.values()));
-
-        return possibleRemainders.stream().map(r -> crt(r, primes, powers)).collect(toList());
-    }
-
     static int[] primes(final int numPrimes) {
         final Primes primes = Primes.load(numPrimes);
         return primes.getUnderlyingArray();
@@ -349,29 +336,31 @@ public class Utils {
         final var coprimeNumbers = numberToResidues.stream().map(i -> i.getFirst().number()).collect(Collectors.toList());
         final var coprimePowers = numberToResidues.stream().map(i -> i.getFirst().power()).collect(Collectors.toList());
 
-//        final List<List<Long>> possibleRemainders = GenericUtils.cartesianProduct(remainderPossibilities);
         final Iterable<Long[]> cartesianProductRemainders = CartesianProductIterator.product(Long.class, remainderPossibilities);
 
-        final cc.redberry.rings.bigint.BigInteger[] coprimeRaisedNumbers = new cc.redberry.rings.bigint.BigInteger[coprimeNumbers.size()];
-        for (int i=0;i<coprimeRaisedNumbers.length;i++) {
-            coprimeRaisedNumbers[i] = cc.redberry.rings.bigint.BigInteger.valueOf(coprimeNumbers.get(i)).pow(coprimePowers.get(i));
+        cc.redberry.rings.bigint.BigInteger[] coprimeRaisedNumbers = null;
+        if (false) {
+            coprimeRaisedNumbers =  new cc.redberry.rings.bigint.BigInteger[coprimeNumbers.size()];
+            for (int i = 0; i < coprimeRaisedNumbers.length; i++) {
+                coprimeRaisedNumbers[i] = cc.redberry.rings.bigint.BigInteger.valueOf(coprimeNumbers.get(i)).pow(coprimePowers.get(i));
+            }
         }
 
         final var cartesianProductStream = StreamSupport.stream(cartesianProductRemainders.spliterator(), false);
         return cartesianProductStream.map(r -> {
             final var rList = Arrays.asList(r);
-            final cc.redberry.rings.bigint.BigInteger[] rBigInts = rList.stream().map(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
+//            final cc.redberry.rings.bigint.BigInteger[] rBigInts = rList.stream().map(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
             try {
-//            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
-                final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, rBigInts).longValue();
-                return ringsCRT;
+            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
+//            final var ringsCRT = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, rBigInts).longValue();
+//            if (manualCRT != ringsCRT) {
+//                System.err.println(String.format("Manual CRT got wrong results. remainders: %s, coprime numbers: %s", rList, coprimeRaisedNumbers));
+//            }
+            return manualCRT;
             } catch (Exception e){
-                System.err.println("coprimeRaisedPowers: " + Arrays.toString(coprimeRaisedNumbers) + " rBitInts: " + Arrays.toString(rBigInts));
+//                System.err.println("coprimeRaisedPowers: " + Arrays.toString(coprimeRaisedNumbers) + " rBitInts: " + Arrays.toString(rBigInts));
                 throw e;
             }
-//            if (manualCRT != ringsCRT) {
-//                System.err.println("Manual CRT got wrong results");
-//            }
         });
     }
 }

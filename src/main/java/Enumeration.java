@@ -23,7 +23,7 @@ public class Enumeration {
     }
 
     // Same as above recursion, but using iteration for memory reasons.
-    static List<Records.NumberAndFactors> nSmoothEnumerationIteration(long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int maxNum) {
+    static List<Records.NumberAndFactors> nSmoothEnumerationIteration(long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int maxNum, int startIdx) {
         final var minB = BigInteger.valueOf(min);
         final var maxB = BigInteger.valueOf(max);
         final var acc = new ArrayList<Records.NumberAndFactors>();
@@ -32,12 +32,10 @@ public class Enumeration {
         List<Records.NumberAndFactors> candidates = new ArrayList<>();
         candidates.add(initialNumber);
 
-        for (int i=primes.length-1;i>=0;i--) {
+        for (int i=startIdx;i>=0;i--) {
             if (primes[i] % 3 ==0
                     // HACK: This approach didn't seem to scale and OOM'ed without this filter.
                     || primes[i] < 30) continue;
-//            int finalI = i;
-//            candidates = candidates.stream().filter(a -> a.multiply(primes[finalI]).number() < max).collect(Collectors.toUnmodifiableList());
             List<Records.NumberAndFactors> newCandidates = new ArrayList<>();
             for (var n : candidates) {
                 var jNumber = n;
@@ -54,12 +52,9 @@ public class Enumeration {
                 }
             }
             candidates.addAll(newCandidates);
-            if (i % 10000 == 0 || i < 1000){
-                System.out.println("i: " + i + " acc.length: " + acc.size() + " Candidates length: " + candidates.size());
-            }
-            if (candidates.size() == 102) {
-                System.out.println(candidates);
-            }
+//            if (i % 10000 == 0 || i < 1000){
+//                System.out.println("i: " + i + " acc.length: " + acc.size() + " Candidates length: " + candidates.size());
+//            }
         }
         return acc;
     }

@@ -11,9 +11,8 @@ public class Step2 {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.
         var a = new Records.NumberAndFactors(BigInteger.ONE, Map.of());
-//        return a;
-        var c1Prod = Constants.c1 * q * d0.number().longValue();
-        if (c1Prod > Constants.zMax || c1Prod < 0) return a;
+        var c1Prod = d0.number().multiply(BigInteger.valueOf(Constants.c1 * q));
+        if (c1Prod.compareTo(BigInteger.valueOf(Constants.zMax)) > 0) return a;
 
         final List<Pair<Integer, Double>> logSquareOverLogP = new ArrayList<>();
         for (var p: Constants.A) {
@@ -25,8 +24,8 @@ public class Step2 {
 
         for (int i=0;i<logSquareOverLogP.size();i++) {
             final var prime = logSquareOverLogP.get(i);
-            var c0Prod = Constants.c0 * q * d0.number().longValue() * prime.getFirst() * a.number().longValue();
-            if (c0Prod > Constants.zMax || c0Prod < 0) break;
+            var c0Prod = d0.number().multiply(BigInteger.valueOf(Constants.c0 * prime.getFirst() * a.number().longValueExact()));
+            if (c0Prod.compareTo(BigInteger.valueOf(Constants.zMax)) > 0) break;
             a = a.multiply(prime.getFirst());
         }
         return a;
