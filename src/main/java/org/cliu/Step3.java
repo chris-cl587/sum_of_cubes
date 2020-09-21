@@ -2,10 +2,6 @@ package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 
-import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-
 public class Step3 {
     /**
      * Computes step 3 of Algorithm 3.5 described in https://arxiv.org/pdf/2007.01209.pdf
@@ -13,13 +9,14 @@ public class Step3 {
      * "Let b be the product of c2 primes p ∈ A not dividing da, chosen either using the
      * ordering computed in the previous step or a fixed order."
      */
-    public static Records.NumberAndFactors step3(Records.NumberAndFactors d, Records.NumberAndFactors a) {
+    public static Records.NumberAndFactors step3(Records.NumberAndFactors d, Records.NumberAndFactors a, long c2) {
         var b = new Records.NumberAndFactors(1L, new Int2IntArrayMap(4));
         for (int i = 0; i< Constants.A.size(); i++) {
-            if (b.primeFactors().size() > Constants.c2) break;
+            if (b.primeFactors().size() > c2) break;
             final var prime = Constants.A.get(i);
             if (d.primeFactors().containsKey(prime) || a.primeFactors().containsKey(prime)) continue;
-            b.multiplyMutable(Constants.A.get(i));
+            if (null == b.multiply(prime)) continue;
+            b.multiplyMutable(prime);
         }
         return b;
     }
