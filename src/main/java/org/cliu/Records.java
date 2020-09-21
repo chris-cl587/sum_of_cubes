@@ -35,12 +35,12 @@ public class Records {
         public NumberAndFactors multiply(long prime) {
             final var newPrimeFactors = new Int2IntArrayMap(this.primeFactors);
             final var primeAsInt = Long.valueOf(prime).intValue();
-            newPrimeFactors.compute(primeAsInt, (key, val) -> val + 1);
+            newPrimeFactors.compute(primeAsInt, (key, val) -> (null == val ? 0:val) + 1);
             return new NumberAndFactors(this.number.multiply(BigInteger.valueOf(prime)), newPrimeFactors);
         }
 
         public void multiplyMutable(BigInteger prime) {
-            this.primeFactors.compute(prime.intValue(), (key, val) -> val + 1);
+            this.primeFactors.compute(prime.intValue(), (key, val) -> (null == val ? 0:val) + 1);
             this.number = this.number.multiply(prime);
         }
     }
