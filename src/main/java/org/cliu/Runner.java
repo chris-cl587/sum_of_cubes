@@ -27,7 +27,7 @@ public class Runner {
             instant = Instant.now();
             // For each number, execute steps 1-4 of Algorithm 3.5 of https://arxiv.org/pdf/2007.01209.pdf
             for (var d0 : d0s) {
-                runOne(d0, k);
+                runOne(d0, k, Constants.zMax);
             }
 
             timeTaken = 1.0 * (Instant.now().toEpochMilli() - instant.toEpochMilli()) / 1000;
@@ -35,14 +35,14 @@ public class Runner {
         }
     }
 
-    public static void runOne(Records.NumberAndFactors d0, int k) {
+    public static void runOne(Records.NumberAndFactors d0, int k, long zMax) {
         final var step1Response = Step1.step1(d0, k);
 
         final var d = step1Response.d();
         var Adq = step1Response.Adq();
         var q = step1Response.q();
 
-        final var a = Step2.step2(d, (int) q, k);
+        final var a = Step2.step2(d, (int) q, k, zMax);
 
         final var b = Step3.step3(d, a);
 
@@ -54,6 +54,6 @@ public class Runner {
             Adq = List.of(0L);
         }
 
-        Step4.step4(q, Adq, k, d0, d, a, b);
+        Step4.step4(q, Adq, k, d0, d, a, b, zMax);
     }
 }

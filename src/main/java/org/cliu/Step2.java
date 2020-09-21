@@ -14,12 +14,12 @@ public class Step2 {
      * This bumps d0 up such that eventually in step 4, the mod "m" class is bigger so we have less
      * candidate values to check.
      */
-    public static Records.NumberAndFactors step2(Records.NumberAndFactors d0, int q, int k) {
+    public static Records.NumberAndFactors step2(Records.NumberAndFactors d0, int q, int k, long zMax) {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.
         var a = new Records.NumberAndFactors(1L, new Int2IntArrayMap(4));
         var c1Prod = d0.multiply(Constants.c1 * q);
-        if (c1Prod == null || c1Prod.number() > Constants.zMax) return a;
+        if (c1Prod == null || c1Prod.number() > zMax) return a;
 
         final List<Pair<Integer, Double>> logSquareOverLogP = new ArrayList<>();
         for (var p: Constants.A) {
@@ -32,7 +32,7 @@ public class Step2 {
         for (int i=0;i<logSquareOverLogP.size();i++) {
             final var prime = logSquareOverLogP.get(i);
             var c0Prod = d0.multiply(Constants.c0 * prime.getFirst() * a.number());
-            if (null == c0Prod || c0Prod.number() > Constants.zMax || null == a.multiply(prime.getFirst())) break;
+            if (null == c0Prod || c0Prod.number() > zMax || null == a.multiply(prime.getFirst())) break;
             a = a.multiply(prime.getFirst());
         }
         return a;

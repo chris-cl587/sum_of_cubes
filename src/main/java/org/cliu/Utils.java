@@ -20,6 +20,9 @@ public class Utils {
     // the jacobi function uses this lookup table
     static final int[] jacobiTable = {0, 1, 0, -1, 0, -1, 0, 1};
 
+    private static final Cache<Pair<Long, Long>, Long> crtCache = Caffeine.newBuilder()
+            .maximumSize((int) 1e8)
+            .build();
     /**
      * From labmath method.
      * def crt(rems, mods): # moduli and remainders are lists; moduli must be pairwsise coprime.
@@ -53,8 +56,10 @@ public class Utils {
             if (m == 1) continue;
             final var mBigInt = BigInteger.valueOf(m);
             var N_over_m = N / m;
-            long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
-            var toAdd = BigInteger.valueOf(r).multiply(BigInteger.valueOf(N_over_m)).multiply(BigInteger.valueOf(invOpt));
+            final var cacheKey = new Pair<>(N, m);
+            long invOpt = crtCache.get(cacheKey, k -> m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e));
+//            long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
+            var toAdd = BigInteger.valueOf(invOpt).multiply(BigInteger.valueOf(r * N_over_m));
             acc = acc.add(toAdd);
         }
         try {
@@ -285,7 +290,7 @@ public class Utils {
         return primes.getUnderlyingArray();
     }
 
-    private static final Cache<String, List<Long>> ssubdCache = Caffeine.newBuilder()
+    private static final Cache<Long, List<Long>> ssubdCache = Caffeine.newBuilder()
             .maximumSize((int)1e7)
             .build();
 
@@ -294,13 +299,13 @@ public class Utils {
     static List<Long> Ssubd(long d, long prime, int k) {
         final var dModP = Math.floorMod(d, prime);
         final var legendreSymbol = GenericUtils.legendreSymbol(d, 3);
-        final var primeIndex = Constants.primeToIndexLookup(prime);
+//        final var primeIndex = Constants.primeToIndexLookup(prime);
 //        var bitmapResponse =  Arrays.stream(SsubdCacheFor3[(int)dModP][primeIndex]).boxed().collect(Collectors.toList());
-        var cachedResponse = ssubdCache.get(legendreSymbol + "~" + dModP + "~" + prime + "~" + k, key -> Ssubd_computation(d, prime, k));
-        var manualResponse = Ssubd_computation(d, prime, k);
-        if (!manualResponse.equals(cachedResponse)) {
-            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, manual: %s", d, prime, k, cachedResponse, manualResponse));
-        }
+        final var longKey = (dModP << 32) + (legendreSymbol << 36) + (k << 40) + prime;
+        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(d, prime, k));
+//        if (!bitmapResponse.equals(cachedResponse)) {
+//            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s", d, prime, k, cachedResponse, bitmapResponse));
+//        }
         return cachedResponse;
     }
 
@@ -358,7 +363,7 @@ public class Utils {
         return cartesianProductStream.map(r -> {
             final var rList = Arrays.asList(r);
             try {
-            final var manualCRT = crt(rList, coprimeNumbers, coprimePowers);
+            final var manualCRT = Utils.crt(rList, coprimeNumbers, coprimePowers);
             return manualCRT;
             } catch (Exception e){
                 throw e;

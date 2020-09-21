@@ -15,11 +15,11 @@ public class Step4 {
      *
      * Second, keep adding multiples of `m` for all the candidates with |z| <= z_max.
      */
-    public static void step4(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a, Records.NumberAndFactors b) {
+    public static void step4(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a, Records.NumberAndFactors b, long zMax) {
         var crtResponse = step4_CRT(q, Adq, k, d0, d, a);
         var m = crtResponse.m();
         var Zm = crtResponse.Zm();
-        step4_ZmCheck(d, Zm, b, m, k);
+        step4_ZmCheck(d, Zm, b, m, k, zMax);
     }
 
     record Step4CrtResponse(long m, Stream<Long>Zm) {}
@@ -49,7 +49,7 @@ public class Step4 {
         return new Step4CrtResponse(m, Utils.crt_enumeration(numberToResidues));
     }
 
-    public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k) {
+    public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k, long zMax) {
         final var primesInB = b.primeFactors().keySet();
         var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
         var result = Math.floorMod(-472715493453327032L, 22741002547995690L);
@@ -57,17 +57,15 @@ public class Step4 {
         var count = 0;
         for (Iterator<Long> it = Zm.iterator(); it.hasNext(); ) {
             long l = it.next();
-            if (Math.floorMod(-472715493453327032L, m) == l) {
-//                throw new RuntimeException("Zm candidate " + l + " in same residue class as answer!");
-            }
             count += 1;
-//            if (count % 100 == 0 ) System.out.println("Checked " + count + " solutions!");
+            if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
             var z = l;
             var zChecked = 0;
             var squaresChecked = 0;
-            while (Math.abs(z) < Constants.zMax) {
+            long toCheckEstimate = zMax / Math.abs(m);
+            while (Math.abs(z) < zMax) {
                 zChecked += 1;
-//                if (zChecked % 10000 == 0) System.out.println("zChecked: " +zChecked);
+                if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
                 // TODO: This can be pre-computed before the `Zm` iteration rather than computed per iteration
                 // as done below.
