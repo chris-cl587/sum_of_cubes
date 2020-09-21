@@ -326,8 +326,8 @@ public class Utils {
 
     static List<Long> cubicReciprocityConstraint(Records.NumberAndFactors d, long k) {
         if (k == 3) {
-            final var first = BigInteger.valueOf(4 * GenericUtils.legendreSymbol(d.number().longValue(), 3) * d.number().longValue());
-            final var dBigInt = BigInteger.valueOf(d.number().longValue());
+            final var first = BigInteger.valueOf(4 * GenericUtils.legendreSymbol(d.number(), 3) * d.number());
+            final var dBigInt = BigInteger.valueOf(d.number());
             final var second = (dBigInt.multiply(dBigInt).subtract(ONE)).multiply(BigInteger.valueOf(3));
             // REMARK: Mod 81 rather than 162 to avoid the case of p^k being a power of 2.
             final var toMod = d.primeFactors().containsKey(2) ? 81 : 162;

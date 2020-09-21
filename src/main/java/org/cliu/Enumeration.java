@@ -26,7 +26,7 @@ public class Enumeration {
         final var minB = BigInteger.valueOf(min);
         final var maxB = BigInteger.valueOf(max);
         final var acc = new ArrayList<Records.NumberAndFactors>();
-        if (initialNumber.number().compareTo(minB) > 0 && initialNumber.number().compareTo(maxB) < 0) acc.add(initialNumber);
+        if (initialNumber.number() > min && initialNumber.number() < max) acc.add(initialNumber);
 
         List<Records.NumberAndFactors> candidates = new ArrayList<>();
         candidates.add(initialNumber);
@@ -40,10 +40,10 @@ public class Enumeration {
                 var jNumber = n;
                 while(true) {
                     jNumber = jNumber.multiply(primes[i]);
-                    if (jNumber.number().compareTo(maxB) > 0) break;
-                    if (i == 0 || jNumber.number().multiply(BigInteger.valueOf(primes[i - 1])).compareTo(maxB) < 0)
+                    if (null == jNumber || jNumber.number() > max) break;
+                    if (i == 0 || (null != jNumber.multiply(primes[i - 1]) && jNumber.multiply(primes[i - 1]).number() < max))
                         newCandidates.add(jNumber);
-                    if (jNumber.number().compareTo(minB) > 0) {
+                    if (jNumber.number() > min) {
                         acc.add(jNumber);
                     }
                     if (acc.size() >= maxNum)  {

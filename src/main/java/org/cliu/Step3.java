@@ -14,11 +14,11 @@ public class Step3 {
      * ordering computed in the previous step or a fixed order."
      */
     public static Records.NumberAndFactors step3(Records.NumberAndFactors d, Records.NumberAndFactors a) {
-        var b = new Records.NumberAndFactors(BigInteger.ONE, new Int2IntArrayMap(4));
+        var b = new Records.NumberAndFactors(1L, new Int2IntArrayMap(4));
         for (int i = 0; i< Constants.A.size(); i++) {
             if (b.primeFactors().size() > Constants.c2) break;
             final var prime = Constants.A.get(i);
-            if (d.primeFactors().containsKey(prime.intValue()) || a.primeFactors().containsKey(prime.intValue())) continue;
+            if (d.primeFactors().containsKey(prime) || a.primeFactors().containsKey(prime)) continue;
             b.multiplyMutable(Constants.A.get(i));
         }
         return b;

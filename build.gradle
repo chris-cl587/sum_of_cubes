@@ -43,10 +43,10 @@ compileTestJava {
 }
 
 tasks.withType(JavaExec) {
-    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC']
+    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC', '-XX:+ShowCodeDetailsInExceptionMessages']
 }
 tasks.withType(Test) {
-    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC']
+    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC', '-XX:+ShowCodeDetailsInExceptionMessages']
 }
 
 
