@@ -21,11 +21,18 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    // Rings library provides some source-of-truth responses for CRT that we can compare
+    // our optimized results against
     compile group: 'cc.redberry', name: 'rings', version: '2.5.5'
+    // Provides pre-computation of up to the 2^31-1 th prime.
     compile group: 'de.scravy', name: 'primes4j', version: '2'
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
+    // For fast Java caching.
     compile 'com.github.ben-manes.caffeine:caffeine:2.8.5'
+    // Attempt to use jna-gmp to speed up mod-exp, was unsuccessful
     compile group: 'com.squareup.jnagmp', name: 'jnagmp', version: '3.0.0'
+    // Fast and more memory efficient maps.
+    compile group: 'it.unimi.dsi', name: 'fastutil', version: '8.4.2'
 }
 
 compileJava {

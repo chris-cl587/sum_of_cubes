@@ -7,20 +7,21 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class Enumeration {
     // Recursively enumerate all positive integers using prime powers. Each prime must be congruent to 0 mod 3.
-    static ConcurrentLinkedDeque<Records.NumberAndFactors> nSmoothEnumerationRecursive(ConcurrentLinkedDeque<Records.NumberAndFactors> acc, long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int startIndex) {
-        if (startIndex < 0) return acc;
-        nSmoothEnumerationRecursive(acc, min, max, primes, initialNumber, startIndex - 1);
-        var iNumber = initialNumber.multiply(primes[startIndex]);
-        while(true) {
-            if (iNumber.number().compareTo(BigInteger.valueOf(max)) > 0) break;
-            if (iNumber.number().compareTo(BigInteger.valueOf(min)) > 0) acc.add(iNumber);
-            nSmoothEnumerationRecursive(acc, min, max, primes, iNumber, startIndex - 1);
-            iNumber = iNumber.multiply(primes[startIndex]);
-        }
-        return acc;
-    }
+    // NOT USED - THIS WILL BLOW THE STACK IMMEDIATELY.
+//    static ConcurrentLinkedDeque<Records.NumberAndFactors> nSmoothEnumerationRecursive(ConcurrentLinkedDeque<Records.NumberAndFactors> acc, long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int startIndex) {
+//        if (startIndex < 0) return acc;
+//        nSmoothEnumerationRecursive(acc, min, max, primes, initialNumber, startIndex - 1);
+//        var iNumber = initialNumber.multiply(primes[startIndex]);
+//        while(true) {
+//            if (iNumber.number().compareTo(BigInteger.valueOf(max)) > 0) break;
+//            if (iNumber.number().compareTo(BigInteger.valueOf(min)) > 0) acc.add(iNumber);
+//            nSmoothEnumerationRecursive(acc, min, max, primes, iNumber, startIndex - 1);
+//            iNumber = iNumber.multiply(primes[startIndex]);
+//        }
+//        return acc;
+//    }
 
-    // Same as above recursion, but using iteration for memory reasons.
+    // Same as above recursion, but using iteration.
     static List<Records.NumberAndFactors> nSmoothEnumerationIteration(long min, long max, long[] primes, Records.NumberAndFactors initialNumber, int maxNum, int startIdx) {
         final var minB = BigInteger.valueOf(min);
         final var maxB = BigInteger.valueOf(max);
@@ -40,7 +41,8 @@ public class Enumeration {
                 while(true) {
                     jNumber = jNumber.multiply(primes[i]);
                     if (jNumber.number().compareTo(maxB) > 0) break;
-                    if (i == 0 || jNumber.multiply(primes[i - 1]).number().compareTo(maxB) < 0) newCandidates.add(jNumber);
+                    if (i == 0 || jNumber.number().multiply(BigInteger.valueOf(primes[i - 1])).compareTo(maxB) < 0)
+                        newCandidates.add(jNumber);
                     if (jNumber.number().compareTo(minB) > 0) {
                         acc.add(jNumber);
                     }

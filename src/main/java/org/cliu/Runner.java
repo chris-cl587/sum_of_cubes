@@ -1,8 +1,11 @@
 package org.cliu;
 
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+
 import java.math.BigInteger;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Runner {
@@ -17,7 +20,7 @@ public class Runner {
             var prime = primesIntArray[i];
             System.out.println(String.format("Generating at most %s numbers with prime: %s", n, prime));
             var instant = Instant.now();
-            final var d0s = Enumeration.nSmoothEnumerationIteration((long) 1e17, (long) 3e17, primesLongArray, new Records.NumberAndFactors(BigInteger.valueOf(prime), Map.of(prime, 1)), n, i);
+            final var d0s = Enumeration.nSmoothEnumerationIteration((long) 1e17, (long) 3e17, primesLongArray, new Records.NumberAndFactors(BigInteger.valueOf(prime), new Int2IntArrayMap(Map.of(prime, 1))), n, i);
             var timeTaken = 1.0 * (Instant.now().toEpochMilli() - instant.toEpochMilli()) / 1000;
             System.out.println(String.format("Generating numbers took %s, %s generated", timeTaken, d0s.size()));
 
