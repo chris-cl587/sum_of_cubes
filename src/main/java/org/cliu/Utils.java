@@ -289,9 +289,19 @@ public class Utils {
             .maximumSize((int)1e7)
             .build();
 
+//    private static long[][][] SsubdCacheFor3 = Constants.getSsubDCache(3);
+
     static List<Long> Ssubd(long d, long prime, int k) {
         final var dModP = Math.floorMod(d, prime);
-        return ssubdCache.get("~" + dModP + "~" + prime + "~" + k, key -> Ssubd_computation(d, prime, k));
+        final var legendreSymbol = GenericUtils.legendreSymbol(d, 3);
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+//        var bitmapResponse =  Arrays.stream(SsubdCacheFor3[(int)dModP][primeIndex]).boxed().collect(Collectors.toList());
+        var cachedResponse = ssubdCache.get(legendreSymbol + "~" + dModP + "~" + prime + "~" + k, key -> Ssubd_computation(d, prime, k));
+        var manualResponse = Ssubd_computation(d, prime, k);
+        if (!manualResponse.equals(cachedResponse)) {
+            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, manual: %s", d, prime, k, cachedResponse, manualResponse));
+        }
+        return cachedResponse;
     }
 
     static List<Long> Ssubd_computation(long d, long prime, int k) {
@@ -300,7 +310,7 @@ public class Utils {
             return List.of((long) Math.floorMod(k + d, 2));
         }
         else {
-            final var s = Constants.eps * GenericUtils.legendreSymbol(d, 3);
+            final var s = Constants.getEps(k) * GenericUtils.legendreSymbol(d, 3);
             final var zs = new ArrayList<Long>();
             final var squaresModP = new HashSet<Long>();
             for (long i = 0; i < prime; i++) {
@@ -316,7 +326,7 @@ public class Utils {
                 final var potentialSquare = threed.multiply(
                         (fours.multiply(zCubedMinusK)).subtract(dCubed)
                 );
-                if (squaresModP.contains(potentialSquare.mod(BigInteger.valueOf(prime)).longValue())) {
+                if (squaresModP.contains(potentialSquare.mod(BigInteger.valueOf(prime)).longValueExact())) {
                     zs.add(i);
                 }
             }

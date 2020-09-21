@@ -51,7 +51,7 @@ public class Step4 {
 
     public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k) {
         final var primesInB = b.primeFactors().keySet();
-        var multiplier = Constants.eps * GenericUtils.legendreSymbol(d.number(), 3);
+        var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
         var result = Math.floorMod(-472715493453327032L, 22741002547995690L);
         var resultWithNoA = Math.floorMod(-472715493453327032L, 17560619728182L);
         var count = 0;
@@ -69,6 +69,9 @@ public class Step4 {
                 zChecked += 1;
 //                if (zChecked % 10000 == 0) System.out.println("zChecked: " +zChecked);
                 var shouldCheckSquare = true;
+                // TODO: This can be pre-computed before the `Zm` iteration rather than computed per iteration
+                // as done below.
+                // This is in Remark 3.6: "For p ∈ A the precomputed sets Sd(p) for d ∈ {1, . . . , p − 1} are also stored as bitmaps, as are Cartesian products of pairs of these sets and certain triples; this facilitates testing if z + pZ lies in Sd(p) for p | b."
                 for (var pb : primesInB) {
                     var zModP = Long.valueOf(Math.floorMod(z, pb));
                     var Sdp = Utils.Ssubd(d.number(), pb, k);
@@ -81,7 +84,7 @@ public class Step4 {
                 if (shouldCheckSquare) {
                     squaresChecked += 1;
                     if (GenericUtils.isSquareCandidate(d.number(), z, k)) {
-                        throw new RuntimeException(String.format("FOUND SQUARE!! d:%s,z:%s", d, z));
+                        throw new SquareFoundException(String.format("FOUND SQUARE!! d:%s,z:%s", d, z));
                     }
                 }
                 z = z + (multiplier * m);

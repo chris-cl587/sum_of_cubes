@@ -1,6 +1,5 @@
 package org.cliu;
 
-import java.math.BigInteger;
 import java.util.List;
 
 public class Step1 {
@@ -18,7 +17,8 @@ public class Step1 {
         if (k == 3) {
             return new Step1Response(d0.primeFactors().containsKey(2) ? 81 : 162, d0, Utils.cubicReciprocityConstraint(d0, k));
         } else {
-            throw new RuntimeException("Not supported yet!");
+            // We don't support using cubic reciprocity constraints for k != 3 yet, need more research.
+            return new Step1Response(1, d0, List.of(0L));
         }
     }
 }

@@ -3,12 +3,9 @@ package org.cliu;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import org.apache.commons.math3.util.Pair;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Step2 {
     /**
