@@ -27,3 +27,15 @@ Algorithm 3.5 has the following stages:
 3. Use auxiliary primes within the Chinese Remainder Theorem enumeration to restrict the set of solutions.
 4. Use auxiliary primes to filter out candidate solutions before checking for square candidates.
 5. Use Chinese Remainder Theorem, along with cube root solutions of `k` mod the prime power. This cube root solution's congruence class is then checked for squares (as due to equation (1.2), if a function of (d,z) is a square, then we get a solution triple (x,y,z))
+
+## Code and optimizations
+
+I've attempted to enumerate the steps in the code as `Step{1,...4}`, and the initial enumeration code in `Enumeration.java`. The code has the following optimizations:
+
+1. Use primitive longs when possible, as it is much faster than BigInteger.
+2. Use cached `S_d(p)` computations for congruence classes mod p of Algorithm 3.1, as per Remark 3.6 
+3. Use Montgomery Inverse and [Newton-Raphson iteration](On Newton-Raphson iteration for multiplicative inverses modulo prime powers) for fast multiplicative inverses mod prime powers
+4. Use Shanks-Tonelli algorithm to compute square roots mod prime.
+5. Use lazy Cartesian product iterator for the Chinese Remainder Theorem candidates.
+6. Use Algorithm 4.2 of [Taking Cube Roots in Zm](https://doi.org/10.1016/S0893-9659(02)00031-9) to compute cuberoots mod a prime (variant of Shanks-Tonelli)
+7. Use Hensel Lifting to lift solutions of cuberoots mod a prime to mod a prime power.
