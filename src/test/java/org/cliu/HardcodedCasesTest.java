@@ -2,11 +2,9 @@ package org.cliu;
 
 import cc.redberry.rings.primes.BigPrimes;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.time.Instant;
 import java.util.Map;
 
 public class HardcodedCasesTest {
@@ -48,8 +46,5 @@ public class HardcodedCasesTest {
                 5,
                 new Int2IntArrayMap(Map.of(5, 1)));
         Runner.runOne(fiveD0, k, (long)1e12, Constants.c0, Constants.c1, Constants.c2 * 3);
-        final var secondRunStart = Instant.now();
-        Runner.runOne(fiveD0, k, (long) 1e12, Constants.c0, Constants.c1, Constants.c2 * 3);
-        Assert.fail("Second run took " + 1.0 * (Instant.now().toEpochMilli() - secondRunStart.toEpochMilli())/1000);
     }
 }
