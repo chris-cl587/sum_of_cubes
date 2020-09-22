@@ -1,7 +1,9 @@
 package org.cliu;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
 import org.apache.commons.math3.util.Pair;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -28,17 +30,17 @@ public class Step4 {
 
         // Hard-coded aux primes
         final var numberToResidues = new ArrayList<Pair<Records.NumberAndPower, List<Long>>>();
-        for (var p:a.primeFactors().keySet()) {
-            numberToResidues.add(new Pair<>(new Records.NumberAndPower((long) p, 1), Utils.Ssubd(d.number(), p, k)));
+        for (var pEntry:a.fastIter()) {
+            numberToResidues.add(new Pair<>(new Records.NumberAndPower(pEntry.getIntKey(), 1), Utils.Ssubd(d.number(), pEntry.getIntKey(), k)));
         }
 
         // Adq
         numberToResidues.add(new Pair<>(new Records.NumberAndPower(q, 1), Adq));
 
         // Candidate power cube roots.
-        for (var primeFactor:d0.primeFactors().keySet()) {
-            final var power = d0.primeFactors().get(primeFactor);
-            final var pair = new Pair<>(new Records.NumberAndPower(primeFactor, power), Utils.hensel_cuberoot(primeFactor, power, k));
+        for (var primeFactorEntry:d0.fastIter()) {
+            final var power = d0.primeFactors().get(primeFactorEntry.getIntKey());
+            final var pair = new Pair<>(new Records.NumberAndPower(primeFactorEntry.getIntKey(), power), Utils.hensel_cuberoot(primeFactorEntry.getIntKey(), power, k));
             numberToResidues.add(pair);
         }
         var cartesianProductMax = 1L;
@@ -50,15 +52,18 @@ public class Step4 {
     }
 
     public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k, long zMax) {
-        final var primesInB = b.primeFactors().keySet();
+        final var start = Instant.now();
+        final var primesInB = b.primeFactors();
         var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
-        var result = Math.floorMod(-472715493453327032L, 22741002547995690L);
-        var resultWithNoA = Math.floorMod(-472715493453327032L, 17560619728182L);
         var count = 0;
         for (Iterator<Long> it = Zm.iterator(); it.hasNext(); ) {
             long l = it.next();
             count += 1;
             if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
+            if (count == 25000000) {
+                System.out.println("Checked 25m solutions in " + (Instant.now().getEpochSecond() - start.getEpochSecond()) + " seconds!");
+                throw new RuntimeException("ABORT!");
+            }
             var z = l;
             var zChecked = 0;
             var squaresChecked = 0;
@@ -67,17 +72,14 @@ public class Step4 {
                 zChecked += 1;
                 if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
-                for (var pb : primesInB) {
-                    var zModP = Math.floorMod(z, pb);
-                    if (!Utils.isInSSubD(d.number(), pb, k, zModP)) {
+                for (var pb : Int2IntMaps.fastIterable(primesInB)) {
+                    var zModP = Math.floorMod(z, pb.getIntKey());
+                    // TODO: Can optimize this lookup to be pre-computed, isInSSubD right now computes 2 modulo
+                    // operations that can be optimized away.
+                    if (!Utils.isInSSubD(d.number(), pb.getIntKey(), k, zModP)) {
                         shouldCheckSquare = false;
                         break;
                     }
-//                    var Sdp = Utils.Ssubd(d.number(), pb, k);
-//                    if (!Sdp.contains(zModP)) {
-//                        shouldCheckSquare = false;
-//                        break;
-//                    }
                 }
                 // Check square
                 if (shouldCheckSquare) {

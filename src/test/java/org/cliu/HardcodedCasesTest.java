@@ -46,6 +46,6 @@ public class HardcodedCasesTest {
         var fiveD0 = new org.cliu.Records.NumberAndFactors(
                 5,
                 new Int2IntArrayMap(Map.of(5, 1)));
-        Runner.runOne(fiveD0, k, (long)1e12, Constants.c0, Constants.c1, Constants.c2 * 3);
+        Runner.runOne(fiveD0, k, (long)1e15, Constants.c0, Constants.c1, Constants.c2 * 3);
     }
 }
