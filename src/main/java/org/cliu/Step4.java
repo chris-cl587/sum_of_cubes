@@ -68,16 +68,16 @@ public class Step4 {
                 if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
                 for (var pb : primesInB) {
-                    var zModP = Long.valueOf(Math.floorMod(z, pb));
-//                    if (!Utils.isInSSubD(d.number(), pb, k, zModP)) {
-//                        shouldCheckSquare = false;
-//                        break;
-//                    }
-                    var Sdp = Utils.Ssubd(d.number(), pb, k);
-                    if (!Sdp.contains(zModP)) {
+                    var zModP = Math.floorMod(z, pb);
+                    if (!Utils.isInSSubD(d.number(), pb, k, zModP)) {
                         shouldCheckSquare = false;
                         break;
                     }
+//                    var Sdp = Utils.Ssubd(d.number(), pb, k);
+//                    if (!Sdp.contains(zModP)) {
+//                        shouldCheckSquare = false;
+//                        break;
+//                    }
                 }
                 // Check square
                 if (shouldCheckSquare) {

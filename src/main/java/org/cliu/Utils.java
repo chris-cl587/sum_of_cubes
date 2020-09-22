@@ -296,20 +296,34 @@ public class Utils {
 
     private static long[][][][] SsubdCacheFor3Values = Constants.getSsubDCache(3, false);
     private static long[][][][] SsubdCacheFor33Values = Constants.getSsubDCache(33, false);
+    private static long[][][][] SsubdCacheFor42Values = Constants.getSsubDCache(42, false);
+    private static long[][][][] SsubdCacheFor165Values = Constants.getSsubDCache(165, false);
+
     private static long[][][][] SsubdCacheFor3Bitmask = Constants.getSsubDCache(3, true);
     private static long[][][][] SsubdCacheFor33Bitmask = Constants.getSsubDCache(33, true);
+    private static long[][][][] SsubdCacheFor42Bitmask = Constants.getSsubDCache(42, true);
+    private static long[][][][] SsubdCacheFor165Bitmask = Constants.getSsubDCache(165, true);
 
     static boolean isInSSubD (long d, long prime, int k, long candidate) {
         final var dModP = Math.floorMod(d, prime);
         final long dMod3 = Math.floorMod(d, 3);
         final var primeIndex = Constants.primeToIndexLookup(prime);
         long[][][][] cacheToUse;
-        if (k == 3) {
-            cacheToUse = SsubdCacheFor3Bitmask;
-        } else if (k == 33) {
-            cacheToUse = SsubdCacheFor33Bitmask;
-        } else {
-            cacheToUse = SsubdCacheFor3Bitmask;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Bitmask;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Bitmask;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Bitmask;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Bitmask;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
         }
 
         return cacheToUse[primeIndex][(int)dModP][(int)(dMod3)][(int)candidate] == 1;
@@ -320,22 +334,31 @@ public class Utils {
         final long dMod3 = Math.floorMod(d ,3);
         final var primeIndex = Constants.primeToIndexLookup(prime);
         long[][][][] cacheToUse;
-        if (k == 3) {
-            cacheToUse = SsubdCacheFor3Values;
-        } else if (k == 33) {
-            cacheToUse = SsubdCacheFor33Values;
-        } else {
-            cacheToUse = SsubdCacheFor3Values;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Values;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Values;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Values;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Values;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
         }
 
         var bitmapResponse =  Arrays.stream(cacheToUse[primeIndex][(int)dModP][(int)dMod3]).boxed().collect(Collectors.toList());
-        final var longKey = (dModP << 32) + (dMod3 << 45) + (k << 50) + prime;
-        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(dModP, dMod3, prime, k));
-        var rawResponse = Ssubd_computation(dModP, dMod3, prime, k);
-        if (!bitmapResponse.equals(cachedResponse)) {
-            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s, (dModP, primeIndex, dMod3): (%s, %s, %s)", d, prime, k, cachedResponse, bitmapResponse, dModP, primeIndex, dMod3));
-        }
-        return cachedResponse;
+//        final var longKey = (dModP << 32) + (dMod3 << 45) + (k << 50) + prime;
+//        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(dModP, dMod3, prime, k));
+//        var rawResponse = Ssubd_computation(dModP, dMod3, prime, k);
+//        if (!bitmapResponse.equals(cachedResponse)) {
+//            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s, (dModP, primeIndex, dMod3): (%s, %s, %s)", d, prime, k, cachedResponse, bitmapResponse, dModP, primeIndex, dMod3));
+//        }
+        return bitmapResponse;
     }
 
     static List<Long> Ssubd_computation(long dMpdP, long dModThree, long prime, int k) {
