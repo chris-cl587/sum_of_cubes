@@ -294,28 +294,58 @@ public class Utils {
             .maximumSize((int)1e7)
             .build();
 
-//    private static long[][][] SsubdCacheFor3 = Constants.getSsubDCache(3);
+    private static long[][][][] SsubdCacheFor3Values = Constants.getSsubDCache(3, false);
+    private static long[][][][] SsubdCacheFor33Values = Constants.getSsubDCache(33, false);
+    private static long[][][][] SsubdCacheFor3Bitmask = Constants.getSsubDCache(3, true);
+    private static long[][][][] SsubdCacheFor33Bitmask = Constants.getSsubDCache(33, true);
+
+    static boolean isInSSubD (long d, long prime, int k, long candidate) {
+        final var dModP = Math.floorMod(d, prime);
+        final long dMod3 = Math.floorMod(d, 3);
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        if (k == 3) {
+            cacheToUse = SsubdCacheFor3Bitmask;
+        } else if (k == 33) {
+            cacheToUse = SsubdCacheFor33Bitmask;
+        } else {
+            cacheToUse = SsubdCacheFor3Bitmask;
+        }
+
+        return cacheToUse[primeIndex][(int)dModP][(int)(dMod3)][(int)candidate] == 1;
+    }
 
     static List<Long> Ssubd(long d, long prime, int k) {
         final var dModP = Math.floorMod(d, prime);
-        final var legendreSymbol = GenericUtils.legendreSymbol(d, 3);
-//        final var primeIndex = Constants.primeToIndexLookup(prime);
-//        var bitmapResponse =  Arrays.stream(SsubdCacheFor3[(int)dModP][primeIndex]).boxed().collect(Collectors.toList());
-        final var longKey = (dModP << 32) + (legendreSymbol << 36) + (k << 40) + prime;
-        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(d, prime, k));
-//        if (!bitmapResponse.equals(cachedResponse)) {
-//            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s", d, prime, k, cachedResponse, bitmapResponse));
-//        }
+        final long dMod3 = Math.floorMod(d ,3);
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        if (k == 3) {
+            cacheToUse = SsubdCacheFor3Values;
+        } else if (k == 33) {
+            cacheToUse = SsubdCacheFor33Values;
+        } else {
+            cacheToUse = SsubdCacheFor3Values;
+        }
+
+        var bitmapResponse =  Arrays.stream(cacheToUse[primeIndex][(int)dModP][(int)dMod3]).boxed().collect(Collectors.toList());
+        final var longKey = (dModP << 32) + (dMod3 << 45) + (k << 50) + prime;
+        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(dModP, dMod3, prime, k));
+        var rawResponse = Ssubd_computation(dModP, dMod3, prime, k);
+        if (!bitmapResponse.equals(cachedResponse)) {
+            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s, (dModP, primeIndex, dMod3): (%s, %s, %s)", d, prime, k, cachedResponse, bitmapResponse, dModP, primeIndex, dMod3));
+        }
         return cachedResponse;
     }
 
-    static List<Long> Ssubd_computation(long d, long prime, int k) {
-        final var dBigInt = BigInteger.valueOf(d);
+    static List<Long> Ssubd_computation(long dMpdP, long dModThree, long prime, int k) {
+        final var dBigInt = BigInteger.valueOf(dMpdP);
         if (prime == 2) {
-            return List.of((long) Math.floorMod(k + d, 2));
+            return List.of((long) Math.floorMod(k + dMpdP, 2));
         }
         else {
-            final var s = Constants.getEps(k) * GenericUtils.legendreSymbol(d, 3);
+            // REMARK: dMod3 = d^{(p-1)/2} mod p for p=3, so it is the legendre symbol
+            final var s = Constants.getEps(k) * (dModThree == 2 ? -1 : 1);
             final var zs = new ArrayList<Long>();
             final var squaresModP = new HashSet<Long>();
             for (long i = 0; i < prime; i++) {

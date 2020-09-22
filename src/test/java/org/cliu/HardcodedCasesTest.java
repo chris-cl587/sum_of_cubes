@@ -39,6 +39,7 @@ public class HardcodedCasesTest {
     // d=5 checked ~5.5x10^9 values of `z`, with zMax = 1e16, according to the slides in about a minute.
     // CURRENT PERFORMANCE: 1e12 in ~70 seconds, so that's 1000x slower, but also we have no cubic reciprocity
     // so in reality, we are ~15x slower.
+    // REMARK: Just a pure array iteration takes ~44s on my laptop, so that is the lower bound of performance
     @Test
     public void testd5PerfTest() {
         final var k = 33;

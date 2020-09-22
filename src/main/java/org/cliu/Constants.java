@@ -1,7 +1,5 @@
 package org.cliu;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.util.List;
 
 public class Constants {
@@ -10,6 +8,32 @@ public class Constants {
 
     final static int primeToIndexLookup(long prime) {
         return A.indexOf((int)prime);
+    }
+
+    public static long[][][][] getSsubDCache(int k, boolean isBitMaskCache) {
+        final var retval = new long[A.size()][251][3][];
+        for (int i=0;i<A.size();i++) {
+            for (int j=0;j<A.get(i);j++) {
+                var jModP = Math.floorMod(j, A.get(i));
+                long[] dMod3EqualsOneArray = new long[A.get(i)];
+                for (var isPositiveIdx: Utils.Ssubd_computation(jModP, 1, A.get(i), k)) {
+                    dMod3EqualsOneArray[isPositiveIdx.intValue()] = 1;
+                }
+
+                long[] dMod3EqualsTwoArray = new long[A.get(i)];
+                for (var isPositiveIdx : Utils.Ssubd_computation(jModP, 2, A.get(i), k)) {
+                    dMod3EqualsTwoArray[isPositiveIdx.intValue()] = 1;
+                }
+                if (isBitMaskCache) {
+                    retval[i][jModP][1] = dMod3EqualsOneArray;
+                    retval[i][jModP][2] = dMod3EqualsTwoArray;
+                } else {
+                    retval[i][jModP][1] = Utils.Ssubd_computation(jModP, 1, A.get(i), k).stream().mapToLong(l -> l).toArray();;
+                    retval[i][jModP][2] = Utils.Ssubd_computation(jModP, 2, A.get(i), k).stream().mapToLong(l -> l).toArray();
+                }
+            }
+        }
+        return retval;
     }
 
     // Epsilon, c0, c1, c2, zMax are constants in the algorithm.

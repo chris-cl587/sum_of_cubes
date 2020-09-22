@@ -67,11 +67,12 @@ public class Step4 {
                 zChecked += 1;
                 if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
-                // TODO: This can be pre-computed before the `Zm` iteration rather than computed per iteration
-                // as done below.
-                // This is in Remark 3.6: "For p ∈ A the precomputed sets Sd(p) for d ∈ {1, . . . , p − 1} are also stored as bitmaps, as are Cartesian products of pairs of these sets and certain triples; this facilitates testing if z + pZ lies in Sd(p) for p | b."
                 for (var pb : primesInB) {
                     var zModP = Long.valueOf(Math.floorMod(z, pb));
+//                    if (!Utils.isInSSubD(d.number(), pb, k, zModP)) {
+//                        shouldCheckSquare = false;
+//                        break;
+//                    }
                     var Sdp = Utils.Ssubd(d.number(), pb, k);
                     if (!Sdp.contains(zModP)) {
                         shouldCheckSquare = false;
