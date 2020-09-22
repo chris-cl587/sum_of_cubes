@@ -297,8 +297,6 @@ public class GenericUtils {
     }
 
     static long legendreSymbol(long n, long p) {
-        if (p == 3) return Math.floorMod(n, 3);
-
         long count, temp;
         long legendre = 1;
         if (n == 0)
