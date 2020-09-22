@@ -319,6 +319,29 @@ public class Utils {
     static long[][][][] SsubdCacheFor42Bitmask = Constants.getSsubDCache(42, true);
     static long[][][][] SsubdCacheFor165Bitmask = Constants.getSsubDCache(165, true);
 
+    static long[] isInSSubDCache(long dModP, long dMod3, long prime, int k) {
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Bitmask;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Bitmask;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Bitmask;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Bitmask;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
+        }
+
+        return cacheToUse[primeIndex][(int) dModP][(int) (dMod3)];
+    }
+
     static boolean isInSSubD (long d, long prime, int k, long candidate) {
         final var dModP = Math.floorMod(d, prime);
         final long dMod3 = Math.floorMod(d, 3);

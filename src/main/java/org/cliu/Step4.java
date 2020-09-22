@@ -5,6 +5,7 @@ import org.apache.commons.math3.util.Pair;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -43,10 +44,10 @@ public class Step4 {
             final var pair = new Pair<>(new Records.NumberAndPower(primeFactorEntry.getIntKey(), power), Utils.hensel_cuberoot(primeFactorEntry.getIntKey(), power, k));
             numberToResidues.add(pair);
         }
-        var cartesianProductMax = 1L;
-        for (var p: numberToResidues) {
-            cartesianProductMax = cartesianProductMax * p.getSecond().size();
-        }
+//        var cartesianProductMax = 1L;
+//        for (var p: numberToResidues) {
+//            cartesianProductMax = cartesianProductMax * p.getSecond().size();
+//        }
 //        System.out.println("CRT will result in " + cartesianProductMax + " potential solutions!");
         return new Step4CrtResponse(m, Utils.crt_enumeration(numberToResidues));
     }
@@ -56,18 +57,28 @@ public class Step4 {
         final var primesInB = b.primeFactors();
         var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
         var count = 0;
+
+        var max = Collections.max(primesInB.keySet());
+        var dMod3 = Math.floorMod(d.number(), 3);
+        long[][] ssubdCandidateLookupTable = new long[max][];
+        for(var pb: Int2IntMaps.fastIterable(primesInB)) {
+            var dModP = Math.floorMod(d.number(), pb.getIntKey());
+            ssubdCandidateLookupTable[pb.getIntKey() - 1] = Utils.isInSSubDCache(dModP, dMod3, pb.getIntKey(), k);
+        }
+
         for (Iterator<Long> it = Zm.iterator(); it.hasNext(); ) {
             long l = it.next();
             count += 1;
             if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
             if (count == 25000000) {
                 System.out.println("Checked 25m solutions in " + (Instant.now().getEpochSecond() - start.getEpochSecond()) + " seconds!");
-                throw new RuntimeException("ABORT!");
+//                throw new RuntimeException("ABORT!");
             }
             var z = l;
             var zChecked = 0;
             var squaresChecked = 0;
             long toCheckEstimate = zMax / Math.abs(m);
+
             while (Math.abs(z) < zMax) {
                 zChecked += 1;
                 if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
@@ -75,8 +86,12 @@ public class Step4 {
                 for (var pb : Int2IntMaps.fastIterable(primesInB)) {
                     var zModP = Math.floorMod(z, pb.getIntKey());
                     // TODO: Can optimize this lookup to be pre-computed, isInSSubD right now computes 2 modulo
-                    // operations that can be optimized away.
-                    if (!Utils.isInSSubD(d.number(), pb.getIntKey(), k, zModP)) {
+                    // operations that can be optimized away to pure lookups.
+//                    if (!Utils.isInSSubD(d.number(), pb.getIntKey(), k, zModP)) {
+//                        shouldCheckSquare = false;
+//                        break;
+//                    }
+                    if (ssubdCandidateLookupTable[pb.getIntKey() - 1][zModP] == 0) {
                         shouldCheckSquare = false;
                         break;
                     }
