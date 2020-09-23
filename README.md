@@ -39,3 +39,9 @@ I've attempted to enumerate the steps in the code as `Step{1,...4}`, and the ini
 5. Use lazy Cartesian product iterator for the Chinese Remainder Theorem candidates.
 6. Use Algorithm 4.2 of [Taking Cube Roots in Zm](https://doi.org/10.1016/S0893-9659(02)00031-9) to compute cuberoots mod a prime (variant of Shanks-Tonelli)
 7. Use Hensel Lifting to lift solutions of cuberoots mod a prime to mod a prime power.
+
+## Results
+
+In [HardcodedCasesTest.java](https://github.com/chris-cl587/sum_of_cubes/blob/master/src/test/java/org/cliu/HardcodedCasesTest.java), we were able to reproduce the solutions for `k=3,42,165` using the candidate `d` values. This shows the validity our implementation from a correctness standpoint.
+
+We also reproduce searching for candidate `z` values given `k=33`, `d=5`, `zMax < 1e16`, which was noted to take about a minute in the researcher's solution. Our current solution do not have the cubic reciprocity constraints, and is ~15x slower, which we are still trying to improve on.
