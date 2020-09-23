@@ -6,6 +6,8 @@ Goal: The goal of this repository is to document some investigations and learnin
 
 Recently, Quanta Magazine has written about this problem in [Why the Sum of Three Cubes Is a Hard Math Problem](https://www.quantamagazine.org/why-the-sum-of-three-cubes-is-a-hard-math-problem-20191105/) and [Sum-of-Three-Cubes Problem Solved for ‘Stubborn’ Number 33](https://www.quantamagazine.org/sum-of-three-cubes-problem-solved-for-stubborn-number-33-20190326/). 
 
+The problem itself is amendable to a mix of theory and practice: efficient algorithms for computing inverses modulo prime powers, cubic reciprocity, and utilizing the Chinese Remainder Theorem for sieving are some of the techniques that made the recent search algorithms achieve success whereas past ones have not.
+
 In reading the papers, I've discovered the following resources:
 1. [Cracking the problem with 33](https://link.springer.com/content/pdf/10.1007/s40993-019-0162-1.pdf) - Research paper describing techniques used in 2019 to solve the 33 problem.
 2. [Sums of three cubes](https://math.mit.edu/~drew/NTW2020.pdf) - Slides with a summary of the approach.
@@ -13,9 +15,13 @@ In reading the papers, I've discovered the following resources:
 
 ## This repository
 
-My background in mathematics does not allow me to understand the `On a question of Mordell` paper to its full extent, but I can gain intuition into the problem by coding Algorithm 3.5. This is what I did here.
+My current background in mathematics does not allow me to understand the [`On a question of Mordell`]((https://arxiv.org/pdf/2007.01209.pdf)) paper to its full extent. In particular, the Density Computations in Section 2 are beyond my ability to understand presently.
 
-The repository is in Java as the IDE, debugging, and library ecosystem allows me to iterate more quickly. I will lose efficiency compared to a C/C++ solution, but as I am not going for solving novel solutions, but rather for learning, I think this is a reasonable choice.
+However, I can gain intuition into the problem by coding Algorithm 3.5. This is what I did here.
+
+The repository is in Java as the IDE, debugging, and library ecosystem allows me to iterate more quickly.
+
+I will lose efficiency compared to a C/C++ solution, but as I am not going for solving novel solutions, but rather for learning and experience purposes, I think this is a reasonable choice.
 
 ## Structure
 
