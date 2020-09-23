@@ -33,7 +33,7 @@ Algorithm 3.5 has the following stages:
 I've attempted to enumerate the steps in the code as `Step{1,...4}`, and the initial enumeration code in `Enumeration.java`. The code has the following optimizations:
 
 1. Use primitive longs when possible, as it is much faster than BigInteger.
-2. Use cached `S_d(p)` computations for congruence classes mod p of Algorithm 3.1, as per Remark 3.6 
+2. Use cached `S_d(p)` computations for congruence classes mod p of Algorithm 3.1, as per Remark 3.6. This uses the pre-computed bitmap approach: using a cache was much slower than direct array access.
 3. Use Montgomery Inverse and [Newton-Raphson iteration](On Newton-Raphson iteration for multiplicative inverses modulo prime powers) for fast multiplicative inverses mod prime powers
 4. Use Shanks-Tonelli algorithm to compute square roots mod prime.
 5. Use lazy Cartesian product iterator for the Chinese Remainder Theorem candidates.
