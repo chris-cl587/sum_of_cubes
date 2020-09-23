@@ -1,6 +1,6 @@
 # Sum of cubes exploration
 
-Author: Chris Liu (chris.cl587@gmail.com)
+Author: Chris Liu (chris.cl587@gmail.com/cl587@cornell.edu)
 
 Goal: The goal of this repository is to document some investigations and learnings I've done on the sum of cubes problem.
 
