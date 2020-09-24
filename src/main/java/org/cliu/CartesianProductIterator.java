@@ -66,7 +66,7 @@ public class CartesianProductIterator {
      * Create a generic array.
      */
     @SuppressWarnings("unchecked")
-    private static <T> T[] newArray(Class<? super T> elementType, int length) {
+    static <T> T[] newArray(Class<? super T> elementType, int length) {
         return (T[]) Array.newInstance(elementType, length);
     }
 

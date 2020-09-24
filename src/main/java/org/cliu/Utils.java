@@ -3,6 +3,7 @@ package org.cliu;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.scravy.primes.Primes;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.math.BigInteger;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -47,15 +49,9 @@ public class Utils {
      * N = iterprod(mods)
      * return sum(r * (N//m) * modinv(N//m, m) for (r, m) in zip(rems, mods) if m != 1) % N
      */
-    static Long crt(List<Long> rems, List<Long> coprimes, List<Integer> pows) {
+    static Long crt(long[] rems, long[] coprimes) {
         // START INDUCTIVE SOLUTION HERE
-        final var primes = new long[rems.size()];
-        final var remainders = new long[rems.size()];
-        for(int i=0;i<rems.size();i++) {
-            primes[i] = (long)Math.pow(coprimes.get(i), pows.get(i));
-            remainders[i] = rems.get(i);
-        }
-        return crt_inductive(primes, remainders);
+        return crt_inductive(coprimes, rems);
         // END INDUCTIVE SOLUTION HERE
         // START CONSTRUCTIVE SOLUTION HERE - looks to be a bit slower than using the inductive solution.
 //        var N = 1L;
@@ -443,35 +439,27 @@ public class Utils {
         }
     }
 
-    static Stream<Long> crt_enumeration(List<Pair<Records.NumberAndPower, List<Long>>> numberToResidues) {
-        final var remainderPossibilities = numberToResidues.stream().map(Pair::getSecond).collect(Collectors.toList());
-        final var coprimeNumbers = numberToResidues.stream().map(i -> i.getFirst().number()).collect(Collectors.toList());
-        final var coprimePowers = numberToResidues.stream().map(i -> i.getFirst().power()).collect(Collectors.toList());
+    static Stream<Long> crt_enumeration(Pair<Records.NumberAndPower, List<Long>>[] numberToResidues) {
+        var remainderPossibilities = new long[numberToResidues.length][];
+        final var coprimeNumbers = new long[numberToResidues.length];
 
-        final Iterable<Long[]> cartesianProductRemainders = CartesianProductIterator.product(Long.class, remainderPossibilities);
+        var possibilities = 1;
+        for (int i=0;i<numberToResidues.length;i++) {
+            remainderPossibilities[i] =numberToResidues[i].getSecond().stream().mapToLong(l->l).toArray();
+            coprimeNumbers[i] = numberToResidues[i].getFirst().numberToPower();
+            possibilities = possibilities * numberToResidues[i].getSecond().size();
+        }
+        final var cartesianProductRemainders = new CartesianProductOfLongsIterator.Product(remainderPossibilities).iterator();
 
-        final var cartesianProductStream = StreamSupport.stream(cartesianProductRemainders.spliterator(), false);
-        return cartesianProductStream.map(r -> {
-            final var rList = Arrays.asList(r);
-            try {
-            final var manualCRT = Utils.crt(rList, coprimeNumbers, coprimePowers);
-            return manualCRT;
-            } catch (Exception e){
-                throw e;
-            }
-        });
+        return Stream.generate(() -> Utils.crt(cartesianProductRemainders.nextLongs(), coprimeNumbers)).limit(possibilities);
     }
 
     public static long crt_inductive(final long[] primes,
                                          final long[] remainders) {
-        if (primes.length != remainders.length)
-            throw new IllegalArgumentException();
 
         long modulus = primes[0];
         for (int i = 1; i < primes.length; ++i) {
-            if (primes[i] <= 0)
-                throw new RuntimeException("Negative CRT input: " + primes[i]);
-            modulus = multiplyExact(primes[i], modulus);
+            modulus = primes[i] * modulus;
         }
 
         long result = 0;
@@ -479,9 +467,14 @@ public class Utils {
             long iModulus = modulus / primes[i];
             final var ii = i;
             long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
-            result = floorMod(addExact(result,
-                    floorMod(multiplyExact(iModulus,
-                            floorMod(multiplyExact(bezout, remainders[i]), primes[i])), modulus)), modulus);
+//            long bezout = bezout0_computation(iModulus, primes[i]);
+            final var bezoutRemainders = bezout * remainders[i];
+            final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
+            final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
+            final var iModulusModModulus = floorMod(iModulusMultiplyBezoutRemainderModPrime, modulus);
+            final var resultPlusModulus = result + iModulusModModulus;
+
+            result = floorMod(resultPlusModulus, modulus);
         }
         return result;
     }

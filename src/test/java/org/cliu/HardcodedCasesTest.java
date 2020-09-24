@@ -38,7 +38,7 @@ public class HardcodedCasesTest {
 
     // See https://math.mit.edu/~drew/NTW2020.pdf
     // d=5 checked ~5.5x10^9 values of `z`, with zMax = 1e16, according to the slides in about a minute.
-    // CURRENT PERFORMANCE: 1e13 in ~80 seconds, so that's 2000x slower, but also we have no cubic reciprocity
+    // CURRENT PERFORMANCE: 1e14 in ~1000 seconds, so that's 2000x slower, but also we have no cubic reciprocity
     // so in reality, we are ~33x slower.
     // REMARK: Just a pure array iteration of 5.5x10^9 takes ~44s on my laptop, so that is the lower bound of performance
     @Test
@@ -48,7 +48,7 @@ public class HardcodedCasesTest {
         var fiveD0 = new org.cliu.Records.NumberAndFactors(
                 5,
                 new Int2IntArrayMap(Map.of(5, 1)));
-        Runner.runOne(fiveD0, k, (long)1e12, Constants.c0, Constants.c1, Constants.c2 * 3);
+        Runner.runOne(fiveD0, k, (long)1e14, Constants.c0, Constants.c1, Constants.c2 * 3);
         System.out.println("test d=5 case finished in : " + (Instant.now().getEpochSecond() - start.getEpochSecond()) + " seconds!");
     }
 }

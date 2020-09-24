@@ -69,5 +69,5 @@ public class Records {
         }
     }
 
-    public record NumberAndPower(long number, int power) {}
+    public record NumberAndPower(long number, int power, long numberToPower) {}
 }
