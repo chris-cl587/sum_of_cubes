@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.lang.Math.addExact;
+import static java.lang.Math.floorMod;
+import static java.lang.Math.multiplyExact;
+import static java.lang.Math.subtractExact;
 import static java.math.BigInteger.ONE;
 
 public class Utils {
@@ -44,30 +48,41 @@ public class Utils {
      * return sum(r * (N//m) * modinv(N//m, m) for (r, m) in zip(rems, mods) if m != 1) % N
      */
     static Long crt(List<Long> rems, List<Long> coprimes, List<Integer> pows) {
-        var N = 1L;
-        for (int i = 0; i < coprimes.size(); i++) N *= (long)Math.pow(coprimes.get(i), pows.get(i));
-
-        BigInteger acc = BigInteger.ZERO;
-        for (int i = 0; i < rems.size(); i++) {
-            long r = rems.get(i);
-            long p = coprimes.get(i);
-            long e = pows.get(i);
-            long m = (long) Math.pow(p, e);
-            if (m == 1) continue;
-            final var mBigInt = BigInteger.valueOf(m);
-            var N_over_m = N / m;
-            final var cacheKey = new Pair<>(N, m);
-            long invOpt = crtCache.get(cacheKey, k -> m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e));
-//            long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
-            var toAdd = BigInteger.valueOf(invOpt).multiply(BigInteger.valueOf(r * N_over_m));
-            acc = acc.add(toAdd);
+        // START INDUCTIVE SOLUTION HERE
+        final var primes = new long[rems.size()];
+        final var remainders = new long[rems.size()];
+        for(int i=0;i<rems.size();i++) {
+            primes[i] = (long)Math.pow(coprimes.get(i), pows.get(i));
+            remainders[i] = rems.get(i);
         }
-        try {
-            return acc.mod(BigInteger.valueOf(N)).longValueExact();
-        } catch (Exception e){
-            System.out.println(String.format("overflow! acc: %s N: %s coprimes: %s, pows: %s", acc, N, coprimes, pows));
-            throw e;
-        }
+        return crt_inductive(primes, remainders);
+        // END INDUCTIVE SOLUTION HERE
+        // START CONSTRUCTIVE SOLUTION HERE - looks to be a bit slower than using the inductive solution.
+//        var N = 1L;
+//        for (int i = 0; i < coprimes.size(); i++) N *= (long)Math.pow(coprimes.get(i), pows.get(i));
+//
+//        BigInteger acc = BigInteger.ZERO;
+//        for (int i = 0; i < rems.size(); i++) {
+//            long r = rems.get(i);
+//            long p = coprimes.get(i);
+//            long e = pows.get(i);
+//            long m = (long) Math.pow(p, e);
+//            if (m == 1) continue;
+//            final var mBigInt = BigInteger.valueOf(m);
+//            var N_over_m = N / m;
+//            final var cacheKey = new Pair<>(N, m);
+//            long invOpt = crtCache.get(cacheKey, k -> m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e));
+////            long invOpt = m % 2 == 0 ? BigInteger.valueOf(N_over_m).modInverse(mBigInt).longValueExact() : GenericUtils.inverse_mod_prime_power(N_over_m, p, e);
+//            var toAdd = BigInteger.valueOf(invOpt).multiply(BigInteger.valueOf(r * N_over_m));
+//            acc = acc.add(toAdd);
+//        }
+//        try {
+//            return acc.mod(BigInteger.valueOf(N)).longValueExact();
+//        } catch (Exception e){
+//            System.out.println(String.format("overflow! acc: %s N: %s coprimes: %s, pows: %s", acc, N, coprimes, pows));
+//            throw e;
+//        }
+        // END CONSTRUCTIVE SOLUTION HERE
     }
 
     /*
@@ -294,28 +309,104 @@ public class Utils {
             .maximumSize((int)1e7)
             .build();
 
-//    private static long[][][] SsubdCacheFor3 = Constants.getSsubDCache(3);
+    static long[][][][] SsubdCacheFor3Values = Constants.getSsubDCache(3, false);
+    static long[][][][] SsubdCacheFor33Values = Constants.getSsubDCache(33, false);
+    static long[][][][] SsubdCacheFor42Values = Constants.getSsubDCache(42, false);
+    static long[][][][] SsubdCacheFor165Values = Constants.getSsubDCache(165, false);
+
+    static long[][][][] SsubdCacheFor3Bitmask = Constants.getSsubDCache(3, true);
+    static long[][][][] SsubdCacheFor33Bitmask = Constants.getSsubDCache(33, true);
+    static long[][][][] SsubdCacheFor42Bitmask = Constants.getSsubDCache(42, true);
+    static long[][][][] SsubdCacheFor165Bitmask = Constants.getSsubDCache(165, true);
+
+    static long[] isInSSubDCache(long dModP, long dMod3, long prime, int k) {
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Bitmask;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Bitmask;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Bitmask;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Bitmask;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
+        }
+
+        return cacheToUse[primeIndex][(int) dModP][(int) (dMod3)];
+    }
+
+    static boolean isInSSubD (long d, long prime, int k, long candidate) {
+        final var dModP = Math.floorMod(d, prime);
+        final long dMod3 = Math.floorMod(d, 3);
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Bitmask;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Bitmask;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Bitmask;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Bitmask;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
+        }
+
+        return cacheToUse[primeIndex][(int)dModP][(int)(dMod3)][(int)candidate] == 1;
+    }
 
     static List<Long> Ssubd(long d, long prime, int k) {
         final var dModP = Math.floorMod(d, prime);
-        final var legendreSymbol = GenericUtils.legendreSymbol(d, 3);
-//        final var primeIndex = Constants.primeToIndexLookup(prime);
-//        var bitmapResponse =  Arrays.stream(SsubdCacheFor3[(int)dModP][primeIndex]).boxed().collect(Collectors.toList());
-        final var longKey = (dModP << 32) + (legendreSymbol << 36) + (k << 40) + prime;
-        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(d, prime, k));
+        final long dMod3 = Math.floorMod(d ,3);
+        final var primeIndex = Constants.primeToIndexLookup(prime);
+        long[][][][] cacheToUse;
+        switch (k) {
+            case 3:
+                cacheToUse = SsubdCacheFor3Values;
+                break;
+            case 33:
+                cacheToUse = SsubdCacheFor33Values;
+                break;
+            case 42:
+                cacheToUse = SsubdCacheFor42Values;
+                break;
+            case 165:
+                cacheToUse = SsubdCacheFor165Values;
+                break;
+            default:
+                throw new RuntimeException("Unknown k: " + k);
+        }
+
+        var bitmapResponse =  Arrays.stream(cacheToUse[primeIndex][(int)dModP][(int)dMod3]).boxed().collect(Collectors.toList());
+//        final var longKey = (dModP << 32) + (dMod3 << 45) + (k << 50) + prime;
+//        var cachedResponse = ssubdCache.get(longKey, key -> Ssubd_computation(dModP, dMod3, prime, k));
+//        var rawResponse = Ssubd_computation(dModP, dMod3, prime, k);
 //        if (!bitmapResponse.equals(cachedResponse)) {
-//            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s", d, prime, k, cachedResponse, bitmapResponse));
+//            throw new RuntimeException(String.format("Bitmap response failed for d=%s,prime=%s,k=%s, cached: %s, bitmap: %s, (dModP, primeIndex, dMod3): (%s, %s, %s)", d, prime, k, cachedResponse, bitmapResponse, dModP, primeIndex, dMod3));
 //        }
-        return cachedResponse;
+        return bitmapResponse;
     }
 
-    static List<Long> Ssubd_computation(long d, long prime, int k) {
-        final var dBigInt = BigInteger.valueOf(d);
+    static List<Long> Ssubd_computation(long dMpdP, long dModThree, long prime, int k) {
+        final var dBigInt = BigInteger.valueOf(dMpdP);
         if (prime == 2) {
-            return List.of((long) Math.floorMod(k + d, 2));
+            return List.of((long) Math.floorMod(k + dMpdP, 2));
         }
         else {
-            final var s = Constants.getEps(k) * GenericUtils.legendreSymbol(d, 3);
+            // REMARK: dMod3 = d^{(p-1)/2} mod p for p=3, so it is the legendre symbol
+            final var s = Constants.getEps(k) * (dModThree == 2 ? -1 : 1);
             final var zs = new ArrayList<Long>();
             final var squaresModP = new HashSet<Long>();
             for (long i = 0; i < prime; i++) {
@@ -369,5 +460,54 @@ public class Utils {
                 throw e;
             }
         });
+    }
+
+    public static long crt_inductive(final long[] primes,
+                                         final long[] remainders) {
+        if (primes.length != remainders.length)
+            throw new IllegalArgumentException();
+
+        long modulus = primes[0];
+        for (int i = 1; i < primes.length; ++i) {
+            if (primes[i] <= 0)
+                throw new RuntimeException("Negative CRT input: " + primes[i]);
+            modulus = multiplyExact(primes[i], modulus);
+        }
+
+        long result = 0;
+        for (int i = 0; i < primes.length; ++i) {
+            long iModulus = modulus / primes[i];
+            final var ii = i;
+            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
+            result = floorMod(addExact(result,
+                    floorMod(multiplyExact(iModulus,
+                            floorMod(multiplyExact(bezout, remainders[i]), primes[i])), modulus)), modulus);
+        }
+        return result;
+    }
+
+
+    private static final Cache<Pair<Long, Long>, Long> bezout0Cache = Caffeine.newBuilder()
+            .maximumSize((int) 1e8)
+            .build();
+
+    private static long bezout0_computation(long a, long b) {
+        long s = 0, old_s = 1;
+        long r = b, old_r = a;
+
+        long q;
+        long tmp;
+        while (r != 0) {
+            q = old_r / r;
+
+            tmp = old_r;
+            old_r = r;
+            r = subtractExact(tmp, multiplyExact(q, r));
+
+            tmp = old_s;
+            old_s = s;
+            s = subtractExact(tmp, multiplyExact(q, s));
+        }
+        return old_s;
     }
 }

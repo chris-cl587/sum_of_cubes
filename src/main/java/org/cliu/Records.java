@@ -1,6 +1,10 @@
 package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.objects.ObjectIterable;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -23,8 +27,11 @@ public class Records {
         public long number() {
             return this.number;
         }
-        public Map<Integer, Integer> primeFactors() {
+        public Int2IntArrayMap primeFactors() {
             return this.primeFactors;
+        }
+        public ObjectIterable<Int2IntMap.Entry> fastIter() {
+            return Int2IntMaps.fastIterable(this.primeFactors);
         }
 
         @Override

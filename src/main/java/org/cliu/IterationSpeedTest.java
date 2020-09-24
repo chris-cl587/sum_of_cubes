@@ -9,7 +9,7 @@ public class IterationSpeedTest {
     public static void test() {
         var started = Instant.now();
         var iterStart = (long) 0;
-        var iterEnd = (long) 1e7;
+        var iterEnd = (long) 5.5e9;
         for (long i = iterStart; i < iterEnd; i++) {
             if (i % 3 == 0) continue;
             if (i % ((iterEnd - iterStart) / 100) == 0) {
