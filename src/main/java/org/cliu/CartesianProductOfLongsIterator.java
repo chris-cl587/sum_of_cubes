@@ -30,6 +30,7 @@ public class CartesianProductOfLongsIterator {
 
         public static class ProductIterator {
             private final long[][] _axes;
+            private final long[] _indices;
             private final Iterator<Long>[] _iterators; // one per axis
             private final long[] _result; // a copy of the last result
             /**
@@ -48,6 +49,7 @@ public class CartesianProductOfLongsIterator {
              */
             ProductIterator(long[][] axes) {
                 _axes = axes;
+                _indices = new long[axes.length];
                 _iterators = CartesianProductIterator.newArray(Iterator.class, _axes.length);
                 for (int a = 0; a < _axes.length; ++a) {
                     _iterators[a] = Arrays.stream(axes[a]).iterator();
@@ -93,8 +95,8 @@ public class CartesianProductOfLongsIterator {
             }
 
             public long[] nextLongs() {
-                if (!hasNext())
-                    throw new NoSuchElementException("!hasNext");
+//                if (!hasNext())
+//                    throw new NoSuchElementException("!hasNext");
                 for (; _nextIndex < _iterators.length; ++_nextIndex) {
                     _result[_nextIndex] = _iterators[_nextIndex].next();
                 }

@@ -1,6 +1,7 @@
 package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import org.apache.commons.math3.util.Pair;
 
 import java.time.Instant;
@@ -25,7 +26,7 @@ public class Step4 {
         step4_ZmCheck(d, Zm, b, m, k, zMax);
     }
 
-    record Step4CrtResponse(long m, Stream<Long>Zm) {}
+    record Step4CrtResponse(long m, LongIterator Zm) {}
 
     public static Step4CrtResponse step4_CRT(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a) {
         var m = d0.number() * q * a.number();
@@ -52,24 +53,24 @@ public class Step4 {
         return new Step4CrtResponse(m, Utils.crt_enumeration(numberToResidues));
     }
 
-    public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k, long zMax) {
+    public static void step4_ZmCheck(Records.NumberAndFactors d, LongIterator Zm, Records.NumberAndFactors b, long m, int k, long zMax) {
         final var start = Instant.now();
-        final var primesInB = b.primeFactors();
-        var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
+        final var primesInB = b.primeFactors().keySet();
         var count = 0;
 
-        var max = Collections.max(primesInB.keySet());
+        var max = Collections.max(primesInB);
         var dMod3 = Math.floorMod(d.number(), 3);
+        var multiplier = dMod3 == 2 ? -1 : 1;
+
         long[][] ssubdCandidateLookupTable = new long[max][];
-        for(var pb: Int2IntMaps.fastIterable(primesInB)) {
-            var dModP = Math.floorMod(d.number(), pb.getIntKey());
-            ssubdCandidateLookupTable[pb.getIntKey() - 1] = Utils.isInSSubDCache(dModP, dMod3, pb.getIntKey(), k);
+        for(var pb: primesInB) {
+            var dModP = Math.floorMod(d.number(), pb);
+            ssubdCandidateLookupTable[pb - 1] = Utils.isInSSubDCache(dModP, dMod3, pb, k);
         }
         long toCheckEstimate = zMax / Math.abs(m);
 
-        var reported = false;
-        for (Iterator<Long> it = Zm.iterator(); it.hasNext(); ) {
-            long l = it.next();
+        for (; Zm.hasNext(); ) {
+            long l = Zm.nextLong();
             count += 1;
             if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
             if (count == 25000000) {
@@ -79,9 +80,8 @@ public class Step4 {
             var z = l;
             var zChecked = 0;
             var squaresChecked = 0;
-            if (!reported && Instant.now().getEpochSecond() - start.getEpochSecond() > 60) {
+            if (Instant.now().getEpochSecond() - start.getEpochSecond() > 60) {
                 System.out.println("Checked " + count + " Z_m solutions in about 60s!");
-                reported = true;
                 throw new RuntimeException("FOO!");
             }
 
@@ -89,9 +89,9 @@ public class Step4 {
                 zChecked += 1;
                 if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
-                for (var pb : Int2IntMaps.fastIterable(primesInB)) {
-                    var zModP = Math.floorMod(z, pb.getIntKey());
-                    if (ssubdCandidateLookupTable[pb.getIntKey() - 1][zModP] == 0) {
+                for (var pb : primesInB) {
+                    var zModP = Math.floorMod(z, pb);
+                    if (ssubdCandidateLookupTable[pb - 1][zModP] == 0) {
                         shouldCheckSquare = false;
                         break;
                     }

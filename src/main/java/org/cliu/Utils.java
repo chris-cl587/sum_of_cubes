@@ -3,6 +3,8 @@ package org.cliu;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.scravy.primes.Primes;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongIterators;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
@@ -10,7 +12,9 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -439,7 +443,7 @@ public class Utils {
         }
     }
 
-    static Stream<Long> crt_enumeration(Pair<Records.NumberAndPower, List<Long>>[] numberToResidues) {
+    static LongIterator crt_enumeration(Pair<Records.NumberAndPower, List<Long>>[] numberToResidues) {
         var remainderPossibilities = new long[numberToResidues.length][];
         final var coprimeNumbers = new long[numberToResidues.length];
 
@@ -451,7 +455,17 @@ public class Utils {
         }
         final var cartesianProductRemainders = new CartesianProductOfLongsIterator.Product(remainderPossibilities).iterator();
 
-        return Stream.generate(() -> Utils.crt(cartesianProductRemainders.nextLongs(), coprimeNumbers)).limit(possibilities);
+        return new LongIterator() {
+            @Override
+            public long nextLong() {
+                return Utils.crt(cartesianProductRemainders.nextLongs(), coprimeNumbers);
+            }
+
+            @Override
+            public boolean hasNext() {
+                return cartesianProductRemainders.hasNext();
+            }
+        };
     }
 
     public static long crt_inductive(final long[] primes,
@@ -462,21 +476,22 @@ public class Utils {
             modulus = primes[i] * modulus;
         }
 
-        long result = 0;
-        for (int i = 0; i < primes.length; ++i) {
-            long iModulus = modulus / primes[i];
-            final var ii = i;
-            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
-//            long bezout = bezout0_computation(iModulus, primes[i]);
-            final var bezoutRemainders = bezout * remainders[i];
-            final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
-            final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
-            final var iModulusModModulus = floorMod(iModulusMultiplyBezoutRemainderModPrime, modulus);
-            final var resultPlusModulus = result + iModulusModModulus;
-
-            result = floorMod(resultPlusModulus, modulus);
-        }
-        return result;
+        return ThreadLocalRandom.current().nextLong(0, modulus);
+//        long result = 0;
+//        for (int i = 0; i < primes.length; ++i) {
+//            long iModulus = modulus / primes[i];
+//            final var ii = i;
+//            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
+////            long bezout = bezout0_computation(iModulus, primes[i]);
+//            final var bezoutRemainders = bezout * remainders[i];
+//            final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
+//            final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
+//            final var iModulusModModulus = floorMod(iModulusMultiplyBezoutRemainderModPrime, modulus);
+//            final var resultPlusModulus = result + iModulusModModulus;
+//
+//            result = floorMod(resultPlusModulus, modulus);
+//        }
+//        return result;
     }
 
 
