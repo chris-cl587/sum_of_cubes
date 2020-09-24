@@ -13,7 +13,7 @@ public class Runner {
         final var primesLongArray = Arrays.stream(primesIntArray).asLongStream().toArray();
 
         // Recursive enumeration of positive integers using prime factors. We partition by the largest prime factor.
-        // This appears to not be very efficient and dependent on the ratio between zMax and the largest prive value.
+        // This appears to not be very efficient and dependent on the ratio between zMax and the largest prime value.
         final var n = Integer.MAX_VALUE;
         for(int i=primesLongArray.length-1;i>=0;i--) {
             var prime = primesIntArray[i];

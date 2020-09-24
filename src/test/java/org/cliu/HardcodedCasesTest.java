@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.time.Instant;
 import java.util.Map;
 
 public class HardcodedCasesTest {
@@ -36,15 +37,17 @@ public class HardcodedCasesTest {
     }
 
     // See https://math.mit.edu/~drew/NTW2020.pdf
-    // d=5 checked ~5.5x10^9 values of `z`, with zMax = 1e16, according to the slides in about a minute.
+    // k=33, d=5 checked ~5.5x10^9 values of `z`, with zMax = 1e16, according to the slides in about a minute.
     // CURRENT PERFORMANCE: 1e12 in ~70 seconds, so that's 1000x slower, but also we have no cubic reciprocity
     // so in reality, we are ~15x slower.
     @Test
     public void testd5PerfTest() {
+        final var start = Instant.now();
         final var k = 33;
         var fiveD0 = new org.cliu.Records.NumberAndFactors(
                 5,
                 new Int2IntArrayMap(Map.of(5, 1)));
         Runner.runOne(fiveD0, k, (long)1e12, Constants.c0, Constants.c1, Constants.c2 * 3);
+        System.out.println("test d=5 case finished in : " + (Instant.now().getEpochSecond() - start.getEpochSecond()) + " seconds!");
     }
 }
