@@ -30,8 +30,7 @@ public class CartesianProductOfLongsIterator {
 
         public static class ProductIterator {
             private final long[][] _axes;
-            private final long[] _indices;
-            private final Iterator<Long>[] _iterators; // one per axis
+            private final int[] _indices;
             private final long[] _result; // a copy of the last result
             /**
              * The minimum index such that this.next() will return an array that contains
@@ -49,12 +48,8 @@ public class CartesianProductOfLongsIterator {
              */
             ProductIterator(long[][] axes) {
                 _axes = axes;
-                _indices = new long[axes.length];
-                _iterators = CartesianProductIterator.newArray(Iterator.class, _axes.length);
-                for (int a = 0; a < _axes.length; ++a) {
-                    _iterators[a] = Arrays.stream(axes[a]).iterator();
-                }
-                _result = new long[_iterators.length];
+                _indices = new int[_axes.length];
+                _result = new long[_axes.length];
             }
 
             private void close() {
@@ -64,18 +59,18 @@ public class CartesianProductOfLongsIterator {
             public boolean hasNext() {
                 if (_nextIndex == NEW) { // This is the first call to hasNext().
                     _nextIndex = 0; // start here
-                    for (var iter : _iterators) {
-                        if (!iter.hasNext()) {
+                    for (int i=0;i<_axes.length;i++) {
+                        if (_axes[i].length == 0) {
                             close(); // no combinations
                             break;
                         }
                     }
-                } else if (_nextIndex >= _iterators.length) {
+                } else if (_nextIndex >= _axes.length) {
                     // This is the first call to hasNext() after next() returned a result.
                     // Determine the _nextIndex to be used by next():
-                    for (_nextIndex = _iterators.length - 1; _nextIndex >= 0; --_nextIndex) {
-                        var iter = _iterators[_nextIndex];
-                        if (iter.hasNext()) {
+                    for (_nextIndex = _axes.length - 1; _nextIndex >= 0; --_nextIndex) {
+                        var axis = _axes[_nextIndex];
+                        if (_indices[_nextIndex] < axis.length -1) {
                             break; // start here
                         }
                         if (_nextIndex == 0) { // All combinations have been generated.
@@ -83,9 +78,8 @@ public class CartesianProductOfLongsIterator {
                             break;
                         }
                         // Repeat this axis, with the next value from the previous axis.
-                        iter = Arrays.stream(_axes[_nextIndex]).iterator();
-                        _iterators[_nextIndex] = iter;
-                        if (!iter.hasNext()) { // Oops; this axis can't be repeated.
+                        _indices[_nextIndex] = 0;
+                        if (_axes[_nextIndex].length == 0) { // Oops; this axis can't be repeated.
                             close(); // no more combinations
                             break;
                         }
@@ -97,8 +91,9 @@ public class CartesianProductOfLongsIterator {
             public long[] nextLongs() {
 //                if (!hasNext())
 //                    throw new NoSuchElementException("!hasNext");
-                for (; _nextIndex < _iterators.length; ++_nextIndex) {
-                    _result[_nextIndex] = _iterators[_nextIndex].next();
+                for (; _nextIndex < _axes.length; ++_nextIndex) {
+                    _result[_nextIndex] = _axes[_nextIndex][_indices[_nextIndex]];
+                    _indices[_nextIndex] += 1;
                 }
                 return _result;
             }

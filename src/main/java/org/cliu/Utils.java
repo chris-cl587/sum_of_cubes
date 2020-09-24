@@ -476,22 +476,22 @@ public class Utils {
             modulus = primes[i] * modulus;
         }
 
-        return ThreadLocalRandom.current().nextLong(0, modulus);
-//        long result = 0;
-//        for (int i = 0; i < primes.length; ++i) {
-//            long iModulus = modulus / primes[i];
-//            final var ii = i;
-//            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
-////            long bezout = bezout0_computation(iModulus, primes[i]);
-//            final var bezoutRemainders = bezout * remainders[i];
-//            final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
-//            final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
-//            final var iModulusModModulus = floorMod(iModulusMultiplyBezoutRemainderModPrime, modulus);
-//            final var resultPlusModulus = result + iModulusModModulus;
-//
-//            result = floorMod(resultPlusModulus, modulus);
-//        }
-//        return result;
+//        return ThreadLocalRandom.current().nextLong(0, modulus);
+        long result = 0;
+        for (int i = 0; i < primes.length; ++i) {
+            long iModulus = modulus / primes[i];
+            final var ii = i;
+            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezout0_computation(iModulus, primes[ii]));
+//            long bezout = bezout0_computation(iModulus, primes[i]);
+            final var bezoutRemainders = bezout * remainders[i];
+            final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
+            final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
+            final var iModulusModModulus = floorMod(iModulusMultiplyBezoutRemainderModPrime, modulus);
+            final var resultPlusModulus = result + iModulusModModulus;
+
+            result = floorMod(resultPlusModulus, modulus);
+        }
+        return result;
     }
 
 
