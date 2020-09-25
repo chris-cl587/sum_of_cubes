@@ -71,6 +71,7 @@ public class CartesianProductOfLongsIterator {
                     for (_nextIndex = _axes.length - 1; _nextIndex >= 0; --_nextIndex) {
                         var axis = _axes[_nextIndex];
                         if (_indices[_nextIndex] < axis.length -1) {
+                            _indices[_nextIndex] += 1;
                             break; // start here
                         }
                         if (_nextIndex == 0) { // All combinations have been generated.
@@ -93,7 +94,6 @@ public class CartesianProductOfLongsIterator {
 //                    throw new NoSuchElementException("!hasNext");
                 for (; _nextIndex < _axes.length; ++_nextIndex) {
                     _result[_nextIndex] = _axes[_nextIndex][_indices[_nextIndex]];
-                    _indices[_nextIndex] += 1;
                 }
                 return _result;
             }
