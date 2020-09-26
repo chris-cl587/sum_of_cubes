@@ -11,7 +11,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.math.BigInteger;
 import java.util.Map;
 
-public class Records {
+public class Models {
+
+    // Small wrapper class representing a number and its prime factors. This is useful for enumeration
+    // purposes. We work with 64 bit longs, and when multiply overflows, we return `null` instead.
     public static class NumberAndFactors {
         public long number;
 
@@ -27,9 +30,11 @@ public class Records {
         public long number() {
             return this.number;
         }
+
         public Int2IntArrayMap primeFactors() {
             return this.primeFactors;
         }
+
         public ObjectIterable<Int2IntMap.Entry> fastIter() {
             return Int2IntMaps.fastIterable(this.primeFactors);
         }
@@ -49,6 +54,8 @@ public class Records {
             return new NumberAndFactors(numberTimesPrime, newPrimeFactors);
         }
 
+        // Some code taken from `Math.multiplyExact`, but instead of throwing an exception, we return
+        // -1, which serves as a sentient value as we assume `x,y > 0`.
         private static long multiplyPositivesOrReturnNegativeOne(long x, long y) {
             long r = x * y;
             if (((x | y) >>> 31 != 0)) {
@@ -63,11 +70,15 @@ public class Records {
             return r;
         }
 
+        // Multiple the model by `prime` and set this model's current state to that value.
+        // This is useful to avoid the creation and subsequent of garbage collection of values.
         public void multiplyMutable(long prime) {
             this.primeFactors.compute((int)prime, (key, val) -> (null == val ? 0:val) + 1);
             this.number = Math.multiplyExact(this.number, prime);
         }
     }
 
+    // A small model representing a number, the power it is raised by, and the value from raising to that power.
+    // This is useful to represent prime powers in a concise and easy to lookup fashion.
     public record NumberAndPower(long number, int power, long numberToPower) {}
 }

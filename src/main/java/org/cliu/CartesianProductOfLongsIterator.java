@@ -4,8 +4,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+// Builds an iterator of the Cartesian product using a long[][] array
+// Follows an implementation outlined in https://stackoverflow.com/a/9449311
 public class CartesianProductOfLongsIterator {
-    public static class Product  {
+    public static class Product {
         private final long[][] _axes;
 
         public Product(long[][] axes) {
@@ -25,20 +27,15 @@ public class CartesianProductOfLongsIterator {
 
         @Override
         public String toString() {
-            return "Cartesian.product(" + Arrays.toString(_axes) + ")";
+            return "CartesianProductOfLongsIterator.product(" + Arrays.toString(_axes) + ")";
         }
 
         public static class ProductIterator {
             private final long[][] _axes;
+            // keeps track of the index each iterator is on.
             private final int[] _indices;
             private final long[] _result; // a copy of the last result
-            /**
-             * The minimum index such that this.next() will return an array that contains
-             * _iterators[index].next(). There are some special sentinel values: NEW means this
-             * is a freshly constructed iterator, DONE means all combinations have been
-             * exhausted (so this.hasNext() == false) and _iterators.length means the value is
-             * unknown (to be determined by this.hasNext).
-             */
+
             private int _nextIndex = NEW;
             private static final int NEW = -2;
             private static final int DONE = -1;
@@ -90,6 +87,7 @@ public class CartesianProductOfLongsIterator {
             }
 
             public long[] nextLongs() {
+                // UNSAFE HERE
 //                if (!hasNext())
 //                    throw new NoSuchElementException("!hasNext");
                 for (; _nextIndex < _axes.length; ++_nextIndex) {
@@ -100,7 +98,7 @@ public class CartesianProductOfLongsIterator {
 
             @Override
             public String toString() {
-                return "Cartesian.product(" + Arrays.toString(_axes) + ").iterator()";
+                return "CartesianProductOfLongsIterator.product(" + Arrays.toString(_axes) + ").iterator()";
             }
         }
     }

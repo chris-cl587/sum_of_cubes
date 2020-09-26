@@ -14,17 +14,17 @@ public class Step2 {
      * This bumps d0 up such that eventually in step 4, the mod "m" class is bigger so we have less
      * candidate values to check.
      */
-    public static Records.NumberAndFactors step2(Records.NumberAndFactors d0, int q, int k, long zMax,long c0, long c1) {
+    public static Models.NumberAndFactors step2(Models.NumberAndFactors d0, int q, int k, long zMax, long c0, long c1) {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.
-        var a = new Records.NumberAndFactors(1L, new Int2IntArrayMap(4));
+        var a = new Models.NumberAndFactors(1L, new Int2IntArrayMap(4));
         var c1Prod = d0.multiply(c1 * q);
         if (c1Prod == null || c1Prod.number() > zMax) return a;
 
         final List<Pair<Integer, Double>> logSquareOverLogP = new ArrayList<>();
         for (var p: Constants.A) {
             if (d0.primeFactors().containsKey(p.intValue())) continue;
-            final var Sdp = Math.log(Utils.Ssubd(d0.number(), p.intValue(), k).size()) / Math.log(p.intValue());
+            final var Sdp = Math.log(Utils.SsubdP(d0.number(), p.intValue(), k).size()) / Math.log(p.intValue());
             logSquareOverLogP.add(new Pair<>(p.intValue(), Sdp));
         }
         logSquareOverLogP.sort(Comparator.comparing(Pair::getSecond));

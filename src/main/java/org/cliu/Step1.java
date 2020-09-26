@@ -3,7 +3,7 @@ package org.cliu;
 import java.util.List;
 
 public class Step1 {
-    record Step1Response(long q, Records.NumberAndFactors d, List<Long> Adq) {};
+    record Step1Response(long q, Models.NumberAndFactors d, List<Long> Adq) {};
 
     /**
      * Computes step 1 of Algorithm 3.5 described in https://arxiv.org/pdf/2007.01209.pdf
@@ -11,7 +11,7 @@ public class Step1 {
      * Find admissible values mod `q` which helps reduce computation as in the CRT step
      * this reduces the possible candidate values.
      */
-    public static Step1Response step1(Records.NumberAndFactors d0, int k) {
+    public static Step1Response step1(Models.NumberAndFactors d0, int k) {
         // For each positive divisor d1 of k/3 with gcd(d1, k/d1) = 1, set d := d0d1 and let Ad(q)
         //be the set of z + qZ for which (d, z) is admissible.
         if (k == 3) {
