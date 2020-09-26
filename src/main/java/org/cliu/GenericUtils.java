@@ -81,13 +81,10 @@ public class GenericUtils {
     }
 
     static long pow(long b, long e, long m) {
-        // REMARK: Appears LibGMP is slower than BigInteger for our setup, re-investigate later.
+        // REMARK: Appears LibGMP is slower than BigInteger for our setup, so we maintain the use of
+        // BigInteger.
 //        var gmpPow = Gmp.modPowInsecure(BigInteger.valueOf(b), BigInteger.valueOf(e), BigInteger.valueOf(m)).longValueExact();
-        var biPow = BigInteger.valueOf(b).modPow(BigInteger.valueOf(e), BigInteger.valueOf(m)).longValue();
-//        if (gmpPow != biPow) {
-//            throw new RuntimeException(String.format("GMP modPowInsecure did not match BI pow for b=%s, e=%s, m=%s", b,e,m));
-//        }
-        return biPow;
+        return BigInteger.valueOf(b).modPow(BigInteger.valueOf(e), BigInteger.valueOf(m)).longValue();
     }
 
     /**
@@ -197,6 +194,7 @@ public class GenericUtils {
         return r;
     }
 
+    // Jacobi symbol, also from bouncycastle.
     public static int jacobi(BigInteger A, BigInteger B) {
         BigInteger a, b, v;
         long k = 1;
@@ -266,22 +264,8 @@ public class GenericUtils {
         return b.equals(ONE) ? (int) k : 0;
     }
 
-    public static <T> List<List<T>> cartesianProduct(List<List<T>> lists) {
-        List<List<T>> combinations = Arrays.asList(Arrays.asList());
-        for (List<T> list : lists) {
-            List<List<T>> extraColumnCombinations = new ArrayList<>();
-            for (List<T> combination : combinations) {
-                for (T element : list) {
-                    List<T> newCombination = new ArrayList<>(combination);
-                    newCombination.add(element);
-                    extraColumnCombinations.add(newCombination);
-                }
-            }
-            combinations = extraColumnCombinations;
-        }
-        return combinations;
-    }
-
+    // Algorithm 3.5's last step requires checking for candidate squares for a function of (d,z) and
+    // a given `k`. If square, then we've found a new sum-of-cubes.
     public static boolean isSquareCandidate(long d, long z, int k) {
         var threed = BigInteger.valueOf(3 * d);
         var zcubed = BigInteger.valueOf(z).pow(3);

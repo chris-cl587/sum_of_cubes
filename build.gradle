@@ -3,6 +3,7 @@ buildscript {
         jcenter()
     }
     dependencies {
+        // For producing a fat-jar with the dependencies all packaged to be runnable.
         classpath 'com.github.jengelman.gradle.plugins:shadow:6.0.0'
     }
 }
@@ -12,7 +13,7 @@ plugins {
 
 apply plugin: 'com.github.johnrengelman.shadow'
 
-group 'org.example'
+group 'org.cliu'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -43,10 +44,30 @@ compileTestJava {
 }
 
 tasks.withType(JavaExec) {
-    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC', '-XX:+ShowCodeDetailsInExceptionMessages']
+    jvmArgs = [
+            '-Xms8g', '-Xmx8g', '-Xss1g',
+            // Enables use of Java 14 records for boilerplate reduction
+            '--enable-preview',
+            // parallel GC has higher throughput
+            '-XX:+UseParallelGC',
+            // Useful NPE messages
+            '-XX:+ShowCodeDetailsInExceptionMessages',
+            // Helpful for profiling with async-profiler
+            '-XX:+UnlockDiagnosticVMOptions', '-XX:+DebugNonSafepoints'
+    ]
 }
 tasks.withType(Test) {
-    jvmArgs = ['-Xms8g', '-Xmx8g', '-Xss1g', '--enable-preview', '-XX:+UseParallelGC', '-XX:+ShowCodeDetailsInExceptionMessages']
+    jvmArgs = [
+            '-Xms8g', '-Xmx8g', '-Xss1g',
+            // Enables use of Java 14 records for boilerplate reduction
+            '--enable-preview',
+            // parallel GC has higher throughput
+            '-XX:+UseParallelGC',
+            // Useful NPE messages
+            '-XX:+ShowCodeDetailsInExceptionMessages',
+            // Helpful for profiling with async-profiler
+            '-XX:+UnlockDiagnosticVMOptions', '-XX:+DebugNonSafepoints'
+    ]
 }
 
 

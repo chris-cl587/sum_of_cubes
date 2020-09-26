@@ -13,13 +13,13 @@ public class Runner {
         final var primesLongArray = Arrays.stream(primesIntArray).asLongStream().toArray();
 
         // Recursive enumeration of positive integers using prime factors. We partition by the largest prime factor.
-        // This appears to not be very efficient and dependent on the ratio between zMax and the largest prive value.
+        // This appears to not be very efficient and dependent on the ratio between zMax and the largest prime value.
         final var n = Integer.MAX_VALUE;
         for(int i=primesLongArray.length-1;i>=0;i--) {
             var prime = primesIntArray[i];
             System.out.println(String.format("Generating at most %s numbers with prime: %s", n, prime));
             var instant = Instant.now();
-            final var d0s = Enumeration.nSmoothEnumerationIteration((long) 1e17, (long) 3e17, primesLongArray, new Records.NumberAndFactors(prime, new Int2IntArrayMap(Map.of(prime, 1))), n, i);
+            final var d0s = Enumeration.nSmoothEnumerationIteration((long) 1e17, (long) 3e17, primesLongArray, new Models.NumberAndFactors(prime, new Int2IntArrayMap(Map.of(prime, 1))), n, i);
             var timeTaken = 1.0 * (Instant.now().toEpochMilli() - instant.toEpochMilli()) / 1000;
             System.out.println(String.format("Generating numbers took %s, %s generated", timeTaken, d0s.size()));
 
@@ -35,11 +35,11 @@ public class Runner {
         }
     }
 
-    public static void runOneDefaults(Records.NumberAndFactors d0, int k) {
+    public static void runOneDefaults(Models.NumberAndFactors d0, int k) {
         runOne(d0, k, Constants.zMax, Constants.c0, Constants.c1, Constants.c2);
     }
 
-    public static void runOne(Records.NumberAndFactors d0, int k, long zMax, long c0, long c1, long c2) {
+    public static void runOne(Models.NumberAndFactors d0, int k, long zMax, long c0, long c1, long c2) {
         final var step1Response = Step1.step1(d0, k);
 
         final var d = step1Response.d();

@@ -1,14 +1,9 @@
 package org.cliu;
 
-import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import org.apache.commons.math3.util.Pair;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class Step4 {
 
@@ -18,94 +13,96 @@ public class Step4 {
      *
      * Second, keep adding multiples of `m` for all the candidates with |z| <= z_max.
      */
-    public static void step4(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a, Records.NumberAndFactors b, long zMax) {
+    public static void step4(long q, List<Long> Adq, int k, Models.NumberAndFactors d0, Models.NumberAndFactors d, Models.NumberAndFactors a, Models.NumberAndFactors b, long zMax) {
         var crtResponse = step4_CRT(q, Adq, k, d0, d, a);
         var m = crtResponse.m();
         var Zm = crtResponse.Zm();
         step4_ZmCheck(d, Zm, b, m, k, zMax);
     }
 
-    record Step4CrtResponse(long m, Stream<Long>Zm) {}
-    public static Step4CrtResponse step4_CRT(long q, List<Long> Adq, int k, Records.NumberAndFactors d0, Records.NumberAndFactors d, Records.NumberAndFactors a) {
+    record Step4CrtResponse(long m, LongIterator Zm) {}
+
+    public static Step4CrtResponse step4_CRT(long q, List<Long> Adq, int k, Models.NumberAndFactors d0, Models.NumberAndFactors d, Models.NumberAndFactors a) {
         var m = d0.number() * q * a.number();
 
         // Hard-coded aux primes
-        final var numberToResidues = new ArrayList<Pair<Records.NumberAndPower, List<Long>>>();
+        final var numberToResidues = new Pair[a.primeFactors.size() + d0.primeFactors().size() + 1];
+        var i = 0;
         for (var pEntry:a.fastIter()) {
-            numberToResidues.add(new Pair<>(new Records.NumberAndPower(pEntry.getIntKey(), 1), Utils.Ssubd(d.number(), pEntry.getIntKey(), k)));
+            numberToResidues[i] = new Pair<>(new Models.NumberAndPower(pEntry.getIntKey(), 1, pEntry.getIntKey()), Utils.SsubdP(d.number(), pEntry.getIntKey(), k));
+            i++;
         }
 
         // Adq
-        numberToResidues.add(new Pair<>(new Records.NumberAndPower(q, 1), Adq));
+        numberToResidues[i] = (new Pair<>(new Models.NumberAndPower(q, 1, q), Adq));
+        i++;
 
         // Candidate power cube roots.
         for (var primeFactorEntry:d0.fastIter()) {
             final var power = d0.primeFactors().get(primeFactorEntry.getIntKey());
-            final var pair = new Pair<>(new Records.NumberAndPower(primeFactorEntry.getIntKey(), power), Utils.hensel_cuberoot(primeFactorEntry.getIntKey(), power, k));
-            numberToResidues.add(pair);
+            final var pair = new Pair<>(new Models.NumberAndPower(primeFactorEntry.getIntKey(), power, (long)Math.pow(primeFactorEntry.getIntKey(), power)), Utils.henselCuberoot(primeFactorEntry.getIntKey(), power, k));
+            numberToResidues[i] = pair;
+            i++;
         }
-//        var cartesianProductMax = 1L;
-//        for (var p: numberToResidues) {
-//            cartesianProductMax = cartesianProductMax * p.getSecond().size();
-//        }
-//        System.out.println("CRT will result in " + cartesianProductMax + " potential solutions!");
-        return new Step4CrtResponse(m, Utils.crt_enumeration(numberToResidues));
+        return new Step4CrtResponse(m, Utils.crtEnumeration(numberToResidues));
     }
 
-    public static void step4_ZmCheck(Records.NumberAndFactors d, Stream<Long> Zm, Records.NumberAndFactors b, long m, int k, long zMax) {
-        final var start = Instant.now();
-        final var primesInB = b.primeFactors();
-        var multiplier = Constants.getEps(k) * GenericUtils.legendreSymbol(d.number(), 3);
-        var count = 0;
+    public static void step4_ZmCheck(Models.NumberAndFactors d, LongIterator Zm, Models.NumberAndFactors b, long m, int k, long zMax) {
+//        final var start = Instant.now();
+        final var primesInB = b.primeFactors().keySet();
+//        var count = 0;
 
-        var max = Collections.max(primesInB.keySet());
         var dMod3 = Math.floorMod(d.number(), 3);
-        long[][] ssubdCandidateLookupTable = new long[max][];
-        for(var pb: Int2IntMaps.fastIterable(primesInB)) {
-            var dModP = Math.floorMod(d.number(), pb.getIntKey());
-            ssubdCandidateLookupTable[pb.getIntKey() - 1] = Utils.isInSSubDCache(dModP, dMod3, pb.getIntKey(), k);
-        }
+        var multiplier = dMod3 == 2 ? -1 : 1;
+        var multiplierM = multiplier * m;
 
-        for (Iterator<Long> it = Zm.iterator(); it.hasNext(); ) {
-            long l = it.next();
-            count += 1;
-            if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
-            if (count == 25000000) {
-                System.out.println("Checked 25m solutions in " + (Instant.now().getEpochSecond() - start.getEpochSecond()) + " seconds!");
-//                throw new RuntimeException("ABORT!");
-            }
-            var z = l;
-            var zChecked = 0;
-            var squaresChecked = 0;
-            long toCheckEstimate = zMax / Math.abs(m);
+        long[][] ssubdCandidateLookupTable = new long[251][];
+        long[] multiplerMModBCache = new long[251];
+        for(var pb: primesInB) {
+            var dModP = Math.floorMod(d.number(), pb);
+            ssubdCandidateLookupTable[pb - 1] = Utils.isInSSubDCache(dModP, dMod3, pb, k);
+            multiplerMModBCache[pb-1] = Math.floorMod(multiplierM, pb);
+        }
+//        long toCheckEstimate = zMax / Math.abs(m);
+
+        for (; Zm.hasNext(); ) {
+            //            count += 1;
+//            if (count % 1000 == 0 ) System.out.println("Checked " + count + " Z_m solutions!");
+            var z = Zm.nextLong();
+//            var zChecked = 0;
+//            var squaresChecked = 0;
+//            if (Instant.now().getEpochSecond() - start.getEpochSecond() > 60) {
+//                System.out.println("Checked " + count + " Z_m solutions in about 60s!");
+//                throw new RuntimeException("FOO!");
+//            }
 
             while (Math.abs(z) < zMax) {
-                zChecked += 1;
-                if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
+//                zChecked += 1;
+//                if (zChecked % 10000 == 0) System.out.println("For a specific residue class, zChecked: " +zChecked + " out of ~" + toCheckEstimate);
                 var shouldCheckSquare = true;
-                for (var pb : Int2IntMaps.fastIterable(primesInB)) {
-                    var zModP = Math.floorMod(z, pb.getIntKey());
-                    // TODO: Can optimize this lookup to be pre-computed, isInSSubD right now computes 2 modulo
-                    // operations that can be optimized away to pure lookups.
-//                    if (!Utils.isInSSubD(d.number(), pb.getIntKey(), k, zModP)) {
-//                        shouldCheckSquare = false;
-//                        break;
-//                    }
-                    if (ssubdCandidateLookupTable[pb.getIntKey() - 1][zModP] == 0) {
+                for (var pb : primesInB) {
+                    var zModP = floorMod(z, pb);
+                    if (ssubdCandidateLookupTable[pb - 1][zModP] == 0) {
                         shouldCheckSquare = false;
                         break;
                     }
                 }
                 // Check square
                 if (shouldCheckSquare) {
-                    squaresChecked += 1;
+//                    squaresChecked += 1;
                     if (GenericUtils.isSquareCandidate(d.number(), z, k)) {
                         throw new SquareFoundException(String.format("FOUND SQUARE!! d:%s,z:%s", d, z));
                     }
                 }
-                z = z + (multiplier * m);
+                z = z + multiplierM;
             }
 //            System.out.println(String.format("Checked %s zs, %s squares, %s percent", zChecked, squaresChecked, 100.0 * squaresChecked/zChecked));
         }
+    }
+
+    static int floorMod(long x, int y) {
+        // TODO: Faster floorMod method may be possible using Barret Reduction here.
+        //  Profile and optimize.
+        return Math.floorMod(x,y);
     }
 }

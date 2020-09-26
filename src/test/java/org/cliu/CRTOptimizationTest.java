@@ -30,10 +30,12 @@ public class CRTOptimizationTest {
     }
 
     private void crtTestOne(List<Long> primes) {
-        final var remainderList = new ArrayList<Long>();
-        for(var p: primes) {
-            final var remainder = ThreadLocalRandom.current().nextLong(0, p);
-            remainderList.add(remainder);
+        var primesLong = new long[primes.size()];
+        final var remainderList = new long[primes.size()];
+        for(int i=0;i<primes.size();i++) {
+            final var remainder = ThreadLocalRandom.current().nextLong(0, primes.get(i));
+            remainderList[i] = remainder;
+            primesLong[i] = primes.get(i);
         }
 
         final var coprimePowers = new ArrayList<Integer>();
@@ -45,7 +47,7 @@ public class CRTOptimizationTest {
             coprimePowers.add(power);
         }
 
-        final cc.redberry.rings.bigint.BigInteger[] rBigInts = remainderList.stream().map(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
+        final cc.redberry.rings.bigint.BigInteger[] rBigInts = Arrays.stream(remainderList).mapToObj(cc.redberry.rings.bigint.BigInteger::valueOf).toArray(cc.redberry.rings.bigint.BigInteger[]::new);
         var coprimeRaisedNumbers = new cc.redberry.rings.bigint.BigInteger[primes.size()];
         var N = BigInteger.ONE;
         for (int i = 0; i < coprimeRaisedNumbers.length; i++) {
@@ -54,7 +56,7 @@ public class CRTOptimizationTest {
                     BigInteger.valueOf(primes.get(i)).pow(coprimePowers.get(i)));
         }
 
-        var crtResponse = Utils.crt(remainderList, primes, coprimePowers);
+        var crtResponse = Utils.crt(remainderList, primesLong);
         var ringsResponse = ChineseRemainders.ChineseRemainders(coprimeRaisedNumbers, rBigInts).longValue();
         if (ringsResponse < 0) {
             ringsResponse += N.longValue();
