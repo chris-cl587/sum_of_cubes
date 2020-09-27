@@ -390,8 +390,8 @@ public class Utils {
         for (int i = 0; i < primes.length; ++i) {
             long iModulus = modulus / primes[i];
             final var ii = i;
-            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezoutComputation(iModulus, primes[ii]));
-//            long bezout = bezout0_computation(iModulus, primes[i]);
+//            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezoutComputation(iModulus, primes[ii]));
+            long bezout = bezoutComputation(iModulus, primes[i]);
             final var bezoutRemainders = bezout * remainders[i];
             final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
             final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;
