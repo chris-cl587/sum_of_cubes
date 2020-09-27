@@ -1,6 +1,7 @@
 package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class Step2 {
     public static Models.NumberAndFactors step2(Models.NumberAndFactors d0, int q, int k, long zMax, long c0, long c1) {
         // Set a := 1, and if c1qd0 < zmax then order the p |- d in A by log #Sd(p)/ log p, and while
         //c0qd0pa < zmax replace a by pa, where p is the next prime in the ordering.
-        var a = new Models.NumberAndFactors(1L, new Int2IntArrayMap(4));
+        var a = new Models.NumberAndFactors(1L, new Int2IntArrayMap(8));
         var c1Prod = d0.multiply(c1 * q);
         if (c1Prod == null || c1Prod.number() > zMax) return a;
 

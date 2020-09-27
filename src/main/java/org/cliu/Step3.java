@@ -1,6 +1,7 @@
 package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 public class Step3 {
     /**
@@ -10,12 +11,12 @@ public class Step3 {
      * ordering computed in the previous step or a fixed order."
      */
     public static Models.NumberAndFactors step3(Models.NumberAndFactors d, Models.NumberAndFactors a, long c2) {
-        var b = new Models.NumberAndFactors(1L, new Int2IntArrayMap(4));
+        var b = new Models.NumberAndFactors(1L, new Int2IntArrayMap(8));
         for (int i = 0; i< Constants.A.size(); i++) {
             if (b.primeFactors().size() > c2) break;
             final var prime = Constants.A.get(i);
             if (d.primeFactors().containsKey(prime) || a.primeFactors().containsKey(prime)) continue;
-            if (null == b.multiply(prime)) continue;
+            if (-1 == Models.NumberAndFactors.multiplyPositivesOrReturnNegativeOne(b.number(), prime.longValue())) continue;
             b.multiplyMutable(prime);
         }
         return b;
