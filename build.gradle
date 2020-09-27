@@ -34,6 +34,8 @@ dependencies {
     compile group: 'com.squareup.jnagmp', name: 'jnagmp', version: '3.0.0'
     // Fast and more memory efficient maps.
     compile group: 'it.unimi.dsi', name: 'fastutil', version: '8.4.2'
+    // for BigIntegerMath, which has a memory-efficient sqrt impl.
+    compile group: 'com.google.guava', name: 'guava', version: '29.0-jre'
 }
 
 compileJava {

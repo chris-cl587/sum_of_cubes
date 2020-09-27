@@ -1,11 +1,9 @@
 package org.cliu;
 
-import com.squareup.jnagmp.Gmp;
+import com.google.common.math.BigIntegerMath;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.math.RoundingMode;
 
 import static java.math.BigInteger.ONE;
 import static java.math.BigInteger.TWO;
@@ -276,8 +274,9 @@ public class GenericUtils {
         );
         // REMARK: Any optimization needs to be using BigInt as the number can very well be greater than
         // a max Long.
-        var isSquareBigInt = candidate.signum() == 1 && candidate.sqrtAndRemainder()[1].equals(ZERO);
-        return isSquareBigInt;
+//        var isSquareBigInt = candidate.signum() == 1 && candidate.sqrtAndRemainder()[1].equals(ZERO);
+//        return isSquareBigInt;
+        return candidate.signum() == 1 && (BigIntegerMath.sqrt(candidate, RoundingMode.FLOOR).pow(2).equals(candidate));
     }
 
     static long legendreSymbol(long n, long p) {

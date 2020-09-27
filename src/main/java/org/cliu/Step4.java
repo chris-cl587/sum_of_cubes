@@ -47,6 +47,9 @@ public class Step4 {
         return new Step4CrtResponse(m, Utils.crtEnumeration(numberToResidues));
     }
 
+    static long[][] ssubdCandidateLookupTable = new long[251][];
+    static long[] multiplierMModBCache = new long[251];
+
     public static void step4_ZmCheck(Models.NumberAndFactors d, LongIterator Zm, Models.NumberAndFactors b, long m, int k, long zMax) {
 //        final var start = Instant.now();
         final var primesInB = b.primeFactors().keySet();
@@ -56,12 +59,10 @@ public class Step4 {
         var multiplier = dMod3 == 2 ? -1 : 1;
         var multiplierM = multiplier * m;
 
-        long[][] ssubdCandidateLookupTable = new long[251][];
-        long[] multiplerMModBCache = new long[251];
         for(var pb: primesInB) {
             var dModP = Math.floorMod(d.number(), pb);
-            ssubdCandidateLookupTable[pb - 1] = Utils.isInSSubDCache(dModP, dMod3, pb, k);
-            multiplerMModBCache[pb-1] = Math.floorMod(multiplierM, pb);
+            Step4.ssubdCandidateLookupTable[pb - 1] = Utils.isInSSubDCache(dModP, dMod3, pb, k);
+            Step4.multiplierMModBCache[pb-1] = Math.floorMod(multiplierM, pb);
         }
 //        long toCheckEstimate = zMax / Math.abs(m);
 
