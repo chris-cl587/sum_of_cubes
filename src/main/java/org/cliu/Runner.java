@@ -1,6 +1,7 @@
 package org.cliu;
 
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 import java.time.Instant;
 import java.util.Arrays;

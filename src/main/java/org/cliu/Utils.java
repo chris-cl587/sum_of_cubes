@@ -3,7 +3,11 @@ package org.cliu;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import de.scravy.primes.Primes;
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 
 import java.math.BigInteger;
@@ -63,17 +67,22 @@ public class Utils {
             .maximumSize((long)1e8)
             .build();
 
+    static long[][] cuberootOfPrimeCache = new long[(int)1e8][];
+    static Int2IntOpenHashMap cuberootIdxLookup = new Int2IntOpenHashMap();
+
     /**
      * Computes the cuberoot of k mod p^e.
      * Does so in a cached fashion to avoid re-computing these values over and over.
      */
     public static List<Long> henselCuberoot(long prime, long primeExp, long cuberoot_k) {
-        var cacheKey = prime + "~" + primeExp + "~" + cuberoot_k;
-        return henselCuberootCache.get(cacheKey, key -> hensel(List.of(-cuberoot_k, 0L, 0L, 1L), prime, primeExp, cuberoot_k));
+//        var cacheKey = prime + "~" + primeExp + "~" + cuberoot_k;
+//        return henselCuberootCache.get(cacheKey, key -> hensel(List.of(-cuberoot_k, 0L, 0L, 1L), prime, primeExp, cuberoot_k));
+        return Arrays.stream(hensel(new long[] {-cuberoot_k, 0L, 0L, 1L}, prime, primeExp, cuberoot_k)).boxed().collect(Collectors.toList());
     }
 
     // @VisibleForTesting
-    static List<Long> hensel(List<Long> f, long prime, long primeExp, long cuberoot_k) {
+    static long[] hensel(long[] f, long prime, long primeExp, long cuberoot_k) {
+        // TODO: Use raw arrays for memory efficiency here.
         if (primeExp == 1) return cuberootOfPrime(cuberoot_k, prime);
         long pk1 = (long) Math.pow(prime, primeExp - 1);
         var df = computeDf(f);
@@ -95,14 +104,14 @@ public class Utils {
                 }
             }
         }
-        return acc;
+        return ArrayUtils.toPrimitive(acc.toArray(new Long[0]));
     }
 
     // @VisibleForTesting
-    static BigInteger polyval(List<Long> coefs, BigInteger x, BigInteger m) {
+    static BigInteger polyval(long[] coefs, BigInteger x, BigInteger m) {
         BigInteger out = BigInteger.ZERO;
-        for (int i = coefs.size() - 1; i >= 0; i--) {
-            var coef = BigInteger.valueOf(coefs.get(i));
+        for (int i = coefs.length - 1; i >= 0; i--) {
+            var coef = BigInteger.valueOf(coefs[i]);
             var multiplied = out.multiply(x);
             out = coef.add(multiplied).mod(m);
         }
@@ -110,40 +119,51 @@ public class Utils {
     }
 
     // @VisibleForTesting
-    static List<Long> computeDf(List<Long> coefs) {
-        var result = new ArrayList<Long>();
-        for (int i = 1; i < coefs.size(); i++) {
-            result.add(i * coefs.get(i));
+    static long[] computeDf(long[] coefs) {
+        final long[] result = new long[coefs.length];
+        for (int i = 1; i < coefs.length; i++) {
+            result[i] = (i * coefs[i]);
         }
         return result;
     }
 
-    // REMARK: This can potentially be cached, but since we are caching the Hensel lifted versions,
-    // we don't cache here.
-    // This algorithm is from ALgorithm 4.2 of https://doi.org/10.1016/S0893-9659(02)00031-9
-    // Original reference impl from the MathLab library.
-    private static List<Long> cuberootOfPrime(long a, long p) {
-        a = Math.floorMod(a, p);
-        if (a == 0 || p == 2 || p == 3) return List.of(Math.floorMod(a, p));
-        if (Math.floorMod(p, 3) == 2) {
-            return List.of(GenericUtils.pow(a, (2 * p - 1) / 3, p));
-        }
-        long crs = GenericUtils.pow(a, (p - 1) / 3, p);
 
-        if (crs != 1) return List.of();
+    private static long[] cuberootOfPrime(long k, long p) {
+        if (cuberootIdxLookup.containsKey((int)p)) {
+            return cuberootOfPrimeCache[cuberootIdxLookup.get((int)p)];
+        } else {
+            final var nextIdx = cuberootIdxLookup.size();
+            final var result = cuberootOfPrimeComputation(k, p);
+            cuberootOfPrimeCache[nextIdx] = result;
+            cuberootIdxLookup.put((int)p, nextIdx);
+            return result;
+        }
+    }
+
+    // This algorithm is from Algorithm 4.2 of https://doi.org/10.1016/S0893-9659(02)00031-9
+    // Original reference impl from the MathLab library.
+    private static long[] cuberootOfPrimeComputation(long k, long p) {
+        k = Math.floorMod(k, p);
+        if (k == 0 || p == 2 || p == 3) return new long[] { Math.floorMod(k, p) };
+        if (Math.floorMod(p, 3) == 2) {
+            return new long[] { GenericUtils.pow(k, (2 * p - 1) / 3, p)};
+        }
+        long crs = GenericUtils.pow(k, (p - 1) / 3, p);
+
+        if (crs != 1) return new long[0];
 
         if (Math.floorMod(p, 9) != 1) {
             long x;
             long c;
             if (Math.floorMod(p, 9) == 4) {
-                x = GenericUtils.pow(a, (2 * p + 1) / 9, p);
+                x = GenericUtils.pow(k, (2 * p + 1) / 9, p);
             } else {
-                x = GenericUtils.pow(a, (p + 2) / 9, p);
+                x = GenericUtils.pow(k, (p + 2) / 9, p);
             }
             var squareRoot = GenericUtils.squareRootModuloPrime(BigInteger.valueOf(-3), BigInteger.valueOf(p)).longValue();
             c = (-1 + squareRoot) * GenericUtils.montgomery_inverse(2, p);
             c = Math.floorMod(c, p);
-            return List.of(x, Math.floorMod(x * c, p), BigInteger.valueOf(x).multiply(BigInteger.valueOf(c)).multiply(BigInteger.valueOf(c)).mod(BigInteger.valueOf(p)).longValue());
+            return new long[] {x, Math.floorMod(x * c, p), BigInteger.valueOf(x).multiply(BigInteger.valueOf(c)).multiply(BigInteger.valueOf(c)).mod(BigInteger.valueOf(p)).longValue()};
         }
 
         long e = 2;
@@ -163,9 +183,9 @@ public class Utils {
 
         long r = e;
         long s = GenericUtils.pow(g, (long) Math.pow(3, (e - 1)), p);
-        long x = GenericUtils.pow(a, (((-q) % 3) * q - 2) / 3, p);
-        long b = Math.floorMod((GenericUtils.pow(a * x, 2, p) * x), p);
-        x = Math.floorMod((a * x), p);
+        long x = GenericUtils.pow(k, (((-q) % 3) * q - 2) / 3, p);
+        long b = Math.floorMod((GenericUtils.pow(k * x, 2, p) * x), p);
+        x = Math.floorMod((k * x), p);
 
         while (Math.floorMod(b, p) != 1) {
             int m;
@@ -186,7 +206,7 @@ public class Utils {
             x = Math.floorMod((x * t), p);
             b = Math.floorMod((b * y), p);
         }
-        return List.of(x, Math.floorMod((x * s), p), Math.floorMod((x * s * s), p));
+        return new long[] { x, Math.floorMod((x * s), p), Math.floorMod((x * s * s), p)};
     }
 
     static int[] primes(final int numPrimes) {
@@ -370,8 +390,8 @@ public class Utils {
         for (int i = 0; i < primes.length; ++i) {
             long iModulus = modulus / primes[i];
             final var ii = i;
-            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezoutComputation(iModulus, primes[ii]));
-//            long bezout = bezout0_computation(iModulus, primes[i]);
+//            long bezout = bezout0Cache.get(new Pair<>(iModulus, primes[i]), k -> bezoutComputation(iModulus, primes[ii]));
+            long bezout = bezoutComputation(iModulus, primes[i]);
             final var bezoutRemainders = bezout * remainders[i];
             final var bezoutRemainderModPrime = floorMod(bezoutRemainders, primes[i]);
             final var iModulusMultiplyBezoutRemainderModPrime = iModulus * bezoutRemainderModPrime;

@@ -36,14 +36,17 @@ public class Enumeration {
                     || primes[i] < 30) continue;
             List<Models.NumberAndFactors> newCandidates = new ArrayList<>();
             for (var n : candidates) {
-                var jNumber = n;
+                var jNumber = n.copy();
                 while(true) {
-                    jNumber = jNumber.multiply(primes[i]);
-                    if (null == jNumber || jNumber.number() > max) break;
-                    if (i == 0 || (null != jNumber.multiply(primes[i - 1]) && jNumber.multiply(primes[i - 1]).number() < max))
-                        newCandidates.add(jNumber);
-                    if (jNumber.number() > min) {
-                        acc.add(jNumber);
+                    final var nextCandidate = Models.NumberAndFactors.multiplyPositivesOrReturnNegativeOne(jNumber.number(),primes[i]);
+
+                    jNumber.multiplyMutable(primes[i]);
+                    if (-1 == nextCandidate || nextCandidate > max) break;
+
+                    if (i == 0 || (-1 != Models.NumberAndFactors.multiplyPositivesOrReturnNegativeOne(nextCandidate, primes[i-1]) && Models.NumberAndFactors.multiplyPositivesOrReturnNegativeOne(nextCandidate, primes[i-1]) < max))
+                        newCandidates.add(jNumber.copy());
+                    if (nextCandidate > min) {
+                        acc.add(jNumber.copy());
                     }
                     if (acc.size() >= maxNum)  {
                         return acc;
