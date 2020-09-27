@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.util.Map;
 
 public class HardcodedCasesTest {
+    // Hard-coded case from https://math.mit.edu/~drew/NTW2020.pdf
     @Test(expected = SquareFoundException.class)
     public void test3() {
         final var k = 3;
@@ -15,6 +16,7 @@ public class HardcodedCasesTest {
         Runner.runOneDefaults(d0For3, k);
     }
 
+    // Hard-coded case from https://math.mit.edu/~drew/NTW2020.pdf
     @Test(expected = SquareFoundException.class)
     public void test42() {
         final var k = 42;
@@ -24,6 +26,7 @@ public class HardcodedCasesTest {
         Runner.runOneDefaults(d0For42, k);
     }
 
+    // Hard-coded case from https://arxiv.org/pdf/2007.01209.pdf
     @Test(expected = SquareFoundException.class)
     public void test165() {
         var dFor165Long = Math.abs(383344975542639445L - 385495523231271884L);
